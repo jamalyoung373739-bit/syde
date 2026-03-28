@@ -1213,7 +1213,6 @@ do
 
 	function syde:Load(Config)
 		task.wait(1)
-		print('[SYED] Loader Loaded')
 		local LOADER = Loader
 		LOADER.Enabled = true
 		LOADER.Parent = coregui
@@ -1547,7 +1546,6 @@ do
 						makefolder(discordFolder)
 					end)
 					if folderSuccess then
-						print("[SYDE] Created DiscordInvites folder at:", discordFolder)
 					else
 						warn("[SYDE] Failed to create DiscordInvites folder:", folderErr)
 					end
@@ -1555,7 +1553,6 @@ do
 
 				local shouldPrompt = true
 				if isfile and discordConfig.RememberJoins and isfile(inviteFilePath) then
-					print("[SYDE] Discord invite '" .. inviteCode .. "' already joined. Skipping prompt.")
 					shouldPrompt = false
 				end
 
@@ -2841,7 +2838,6 @@ function syde:Init(library)
 		layout:Bind()
 		layout:Update()
 
-		print("LATENCY SCRIPT RUNNING")
 
 		local Stats = game:GetService("Stats")
 		local TweenService = game:GetService("TweenService")
