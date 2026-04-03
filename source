@@ -1,11 +1,55 @@
---[[
+local getgenv = rawget(_G, 'getgenv')
+local loadstring = rawget(_G, 'loadstring')
+local load = rawget(_G, 'load')
+local readfile = rawget(_G, 'readfile')
+local writefile = rawget(_G, 'writefile')
+local isfile = rawget(_G, 'isfile')
+local isfolder = rawget(_G, 'isfolder')
+local makefolder = rawget(_G, 'makefolder')
+local listfiles = rawget(_G, 'listfiles')
+local setclipboard = rawget(_G, 'setclipboard')
+local syn = rawget(_G, 'syn')
+local request = rawget(_G, 'request')
+local http_request = rawget(_G, 'http_request')
+local http = rawget(_G, 'http')
+local getsynasset = rawget(_G, 'getsynasset')
+local getcustomasset = rawget(_G, 'getcustomasset')
+local KRNL_LOADED = rawget(_G, 'KRNL_LOADED')
+local __sydeOverrideResult = nil
 
-.dP"Y8 Yb  dP 8888b.  888888 
-`Ybo."  YbdP   8I  Yb 88__   
-o.`Y8b   8P    8I  dY 88""   
-8bodP'  dP    8888Y"  888888  v0
+local __sydeEnv = _G
+if type(getgenv) == 'function' then
+	local okEnv, env = pcall(getgenv)
+	if okEnv and type(env) == 'table' then
+		__sydeEnv = env
+	end
+end
 
-]]
+if not __sydeEnv.__SYDE_LOCAL_SOURCE_REDIRECTING then
+	local compiler = nil
+	if type(loadstring) == 'function' then
+		compiler = loadstring
+	elseif type(load) == 'function' then
+		compiler = load
+	end
+
+	if type(readfile) == 'function' and type(compiler) == 'function' then
+		local okSource, source = pcall(readfile, 'Syde-src.lua')
+		if okSource and type(source) == 'string' and source ~= '' then
+			__sydeEnv.__SYDE_LOCAL_SOURCE_REDIRECTING = true
+			local okChunk, chunk = pcall(compiler, source)
+			if okChunk and type(chunk) == 'function' then
+				local okExec, result = pcall(chunk)
+				__sydeEnv.__SYDE_LOCAL_SOURCE_REDIRECTING = nil
+				if okExec and type(result) == 'table' and type(result.Load) == 'function' then
+					__sydeOverrideResult = result
+				end
+			else
+				__sydeEnv.__SYDE_LOCAL_SOURCE_REDIRECTING = nil
+			end
+		end
+	end
+end
 
 local inputservice =	game:GetService("InsertService")
 local tweenservice = 	game:GetService("TweenService")
@@ -19,34 +63,35 @@ local textservice =     game:GetService('TextService')
 local coregui =         game:GetService("CoreGui")
 
 -- update check
-local update = false
+local update = false 
+
 if update then
 	local updategui = game:GetObjects("rbxassetid://122225389943465")[1]
 	updategui.Parent = coregui
 
-	local cord = '/GzumVvz3QM'
+	local cord = "/GzumVvz3QM"
 
 	task.wait(0.5)
 	updategui.Enabled = true
 
 	updategui.main.BackgroundTransparency = 1
-	updategui.main.Size = UDim2.new(0, 150,0, 150)
+	updategui.main.Size = UDim2.new(0, 150, 0, 150)
 	updategui.main.time.TextTransparency = 1
 	updategui.main.info.TextTransparency = 1
 	updategui.main.text.TextLabel.TextTransparency = 1
 	updategui.main.text.more.TextTransparency = 1
 
-	tweenservice:Create(updategui.main, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
-	tweenservice:Create(updategui.main, TweenInfo.new(0.75, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 350,0, 230)}):Play()
+	tweenservice:Create(updategui.main, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Transparency = 0 }):Play()
+	tweenservice:Create(updategui.main, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 350, 0, 230) }):Play()
 
 	task.wait(0.07)
 
-	tweenservice:Create(updategui.main.time, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-	tweenservice:Create(updategui.main.info, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+	tweenservice:Create(updategui.main.time, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
+	tweenservice:Create(updategui.main.info, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
 	task.wait(0.07)
-	tweenservice:Create(updategui.main.text.TextLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+	tweenservice:Create(updategui.main.text.TextLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
 	task.wait(0.07)
-	tweenservice:Create(updategui.main.text.more, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+	tweenservice:Create(updategui.main.text.more, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
 
 	local duration = 25
 	local startTime = tick()
@@ -61,20 +106,17 @@ if update then
 		if remaining <= 0 then
 			connection:Disconnect()
 
-			tweenservice:Create(updategui.main.text.TextLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(updategui.main.text.TextLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
 			task.wait(0.07)
-			tweenservice:Create(updategui.main.text.more, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(updategui.main.text.more, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
 			task.wait(0.2)
-			tweenservice:Create(updategui.main, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
-			tweenservice:Create(updategui.main, TweenInfo.new(0.75, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 150,0, 130)}):Play()
+			tweenservice:Create(updategui.main, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Transparency = 1 }):Play()
+			tweenservice:Create(updategui.main, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 150, 0, 130) }):Play()
 			updategui.main.s2.Visible = false
 
-
-
 			task.wait(0.07)
-
-			tweenservice:Create(updategui.main.time, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-			tweenservice:Create(updategui.main.info, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			tweenservice:Create(updategui.main.time, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
+			tweenservice:Create(updategui.main.info, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
 
 			task.wait(0.75)
 			updategui:Destroy()
@@ -82,13 +124,16 @@ if update then
 	end)
 
 	updategui.main.s2.interact.MouseButton1Click:Connect(function()
-
-		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Color = Color3.fromRGB(74, 255, 33)}):Play()
-		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Transparency = 0}):Play()
+		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Color = Color3.fromRGB(74, 255, 33) }):Play()
+		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Transparency = 0 }):Play()
 		task.wait(0.5)
-		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Color = Color3.fromRGB(87, 101, 242)}):Play()
-		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Transparency = 0.5}):Play()
-		setclipboard(cord)
+		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Color = Color3.fromRGB(87, 101, 242) }):Play()
+		tweenservice:Create(updategui.main.s2.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Transparency = 0.5 }):Play()
+		if setclipboard then
+			pcall(function()
+				setclipboard("https://discord.gg" .. cord)
+			end)
+		end
 	end)
 end
 
@@ -127,7 +172,8 @@ local syde = {
 	ConfigFile = 'Config';
 	Flags = {};
 	SettingsFlags = {};
-}
+	UIAnimationsEnabled = true;
+};
 
 -- @Utilities
 
@@ -969,12 +1015,19 @@ end
 
 function syde:replayLoadTweens(targetObject)
 	syde:resetToInitialState(false)
+	local animationsEnabled = syde.UIAnimationsEnabled ~= false
 
 	for object, tweenData in pairs(loadTweens) do
 		if object and object.Parent then
 			if not targetObject or object == targetObject then
 				tweenData.tween:Cancel()
-				tweenData.tween:Play()
+				if animationsEnabled then
+					tweenData.tween:Play()
+				else
+					for property, value in pairs(tweenData.properties) do
+						object[property] = value
+					end
+				end
 			end
 		end
 	end
@@ -1206,6 +1259,7 @@ end
 local rs
 local ss
 local mh = true
+local use24HourClock = false
 
 
 --@Loader
@@ -1213,6 +1267,7 @@ do
 
 	function syde:Load(Config)
 		task.wait(1)
+		print('[SYED] Loader Loaded')
 		local LOADER = Loader
 		LOADER.Enabled = true
 		LOADER.Parent = coregui
@@ -1457,11 +1512,13 @@ do
 					end
 				end
 
-				-- File validation
+				-- File validation (guard read/write functions to avoid nil-call in restricted executors)
 				local success, err = pcall(function()
-					if isfile and not isfile(fullPath) then
-						writefile(fullPath, "-- Protected UI Configuration")
-					else
+					if type(isfile) == "function" and not isfile(fullPath) then
+						if type(writefile) == "function" then
+							writefile(fullPath, "-- Protected UI Configuration")
+						end
+					elseif type(readfile) == "function" then
 						local content = readfile(fullPath)
 					end
 				end)
@@ -1546,6 +1603,7 @@ do
 						makefolder(discordFolder)
 					end)
 					if folderSuccess then
+						print("[SYDE] Created DiscordInvites folder at:", discordFolder)
 					else
 						warn("[SYDE] Failed to create DiscordInvites folder:", folderErr)
 					end
@@ -1553,6 +1611,7 @@ do
 
 				local shouldPrompt = true
 				if isfile and discordConfig.RememberJoins and isfile(inviteFilePath) then
+					print("[SYDE] Discord invite '" .. inviteCode .. "' already joined. Skipping prompt.")
 					shouldPrompt = false
 				end
 
@@ -1770,9 +1829,414 @@ local userinfodisabled = false
 local intro = false
 local bluron = false
 local glow = false
+local uiAnimationsEnabled = syde.UIAnimationsEnabled ~= false
+local activeBlurDof = nil
 
 local uitoggle = Enum.KeyCode.RightShift
 --
+
+local function tweenOrSet(instance, info, goal)
+	if uiAnimationsEnabled then
+		local tween = tweenservice:Create(instance, info, goal)
+		tween:Play()
+		return tween
+	end
+
+	for property, value in pairs(goal) do
+		instance[property] = value
+	end
+
+	return nil
+end
+
+local function getTopFunctionBaseTransparency()
+	return bluron and 0.95 or 0.86
+end
+
+local function getTopFunctionHoverTransparency()
+	return bluron and 0.9 or 0.76
+end
+
+local function getTopFunctionsContainerTransparency()
+	return bluron and 0.97 or 0.9
+end
+
+local function getBasicButtonTransparency()
+	return bluron and 0.62 or 0.34
+end
+
+local function getSliderTitleLabel(sliderFrame)
+	if not sliderFrame then
+		return nil
+	end
+	return sliderFrame:FindFirstChild("Title") or sliderFrame:FindFirstChild("title")
+end
+
+local function normalizeImageSource(imageValue)
+	if imageValue == nil then
+		return ""
+	end
+
+	local asString = tostring(imageValue)
+	if asString == "" then
+		return ""
+	end
+
+	if string.find(asString, "rbxassetid://", 1, true)
+		or string.find(asString, "http://", 1, true)
+		or string.find(asString, "https://", 1, true) then
+		return asString
+	end
+
+	if string.match(asString, "^%d+$") then
+		return "rbxassetid://" .. asString
+	end
+
+	return asString
+end
+
+local function getRequestFunction()
+	if syn and syn.request then
+		return syn.request
+	end
+	if http_request then
+		return http_request
+	end
+	if request then
+		return request
+	end
+	if http and http.request then
+		return http.request
+	end
+	return nil
+end
+
+local function getLocalAssetFunction()
+	if getsynasset then
+		return getsynasset
+	end
+	if getcustomasset then
+		return getcustomasset
+	end
+	return nil
+end
+
+local function normalizeFileName(text)
+	local name = tostring(text or ""):gsub("[^%w_%-]", "_")
+	if name == "" then
+		name = "wallpaper"
+	end
+	if #name > 80 then
+		name = name:sub(1, 80)
+	end
+	return name
+end
+
+local function resolveWallpaperSource(rawSource)
+	local source = normalizeImageSource(rawSource)
+	if source == "" then
+		return nil, "Empty wallpaper source."
+	end
+
+	local isHttp = source:match("^https?://") ~= nil
+	local isAsset = source:match("^rbxassetid://") ~= nil
+	if isAsset then
+		return source, nil
+	end
+	if not isHttp then
+		return nil, "Invalid source. Use Roblox ID, rbxassetid:// or full https:// URL."
+	end
+
+	local requestFn = getRequestFunction()
+	local localAssetFn = getLocalAssetFunction()
+	if not (requestFn and localAssetFn and type(writefile) == "function") then
+		return source, nil
+	end
+
+	local cacheDir = string.format("%s/WallpaperCache", syde.ConfigFolder)
+	if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder(cacheDir) then
+		pcall(function()
+			makefolder(cacheDir)
+		end)
+	end
+
+	local ext = source:match("%.([%a%d]+)$")
+	if not ext then
+		ext = source:match("%.([%a%d]+)%?")
+	end
+	ext = (ext or "jpg"):lower()
+
+	local safeFileName = normalizeFileName(source)
+	local localPath = string.format("%s/%s.%s", cacheDir, safeFileName, ext)
+
+	local ok, response = pcall(function()
+		return requestFn({
+			Url = source,
+			Method = "GET"
+		})
+	end)
+	if not ok or not response or not response.Body or response.Body == "" then
+		return source, nil
+	end
+	if response.Success == false then
+		return source, nil
+	end
+
+	local wrote = pcall(function()
+		writefile(localPath, response.Body)
+	end)
+	if not wrote then
+		return source, nil
+	end
+
+	local okAsset, asset = pcall(function()
+		return localAssetFn(localPath)
+	end)
+	if okAsset and asset then
+		return asset, nil
+	end
+
+	return source, nil
+end
+
+local function applyTopFunctionBackgrounds(animated)
+	local duration = (animated and uiAnimationsEnabled) and 0.4 or 0
+	local target = getTopFunctionBaseTransparency()
+	local containerTarget = getTopFunctionsContainerTransparency()
+
+	if top and top:FindFirstChild("functions") and top.functions:IsA("GuiObject") then
+		if duration > 0 then
+			tweenservice:Create(top.functions, TweenInfo.new(duration, Enum.EasingStyle.Exponential), {
+				BackgroundTransparency = containerTarget
+			}):Play()
+		else
+			top.functions.BackgroundTransparency = containerTarget
+		end
+	end
+
+	for _, control in ipairs(top.functions:GetChildren()) do
+		if control:IsA("Frame") then
+			if duration > 0 then
+				tweenservice:Create(control, TweenInfo.new(duration, Enum.EasingStyle.Exponential), {
+					BackgroundTransparency = target
+				}):Play()
+			else
+				control.BackgroundTransparency = target
+			end
+		end
+	end
+end
+
+local function applySettingsFunctionBackground(animated)
+	local closeButton = window
+		and window:FindFirstChild("settings")
+		and window.settings:FindFirstChild("top")
+		and window.settings.top:FindFirstChild("functions")
+		and window.settings.top.functions:FindFirstChild("close")
+
+	if closeButton and closeButton:IsA("GuiObject") then
+		local duration = (animated and uiAnimationsEnabled) and 0.35 or 0
+		local target = getTopFunctionBaseTransparency()
+		if duration > 0 then
+			tweenservice:Create(closeButton, TweenInfo.new(duration, Enum.EasingStyle.Exponential), {
+				BackgroundTransparency = target
+			}):Play()
+		else
+			closeButton.BackgroundTransparency = target
+		end
+	end
+end
+
+local function isLikelyBasicButton(frame)
+	return frame:IsA("Frame")
+		and frame:FindFirstChild("interact")
+		and frame:FindFirstChild("title")
+		and frame:FindFirstChild("ImageLabel")
+		and frame:FindFirstChild("UIStroke")
+end
+
+local function applyBasicButtonTransparency()
+	local target = getBasicButtonTransparency()
+	local roots = { pages, window.settings and window.settings.pages }
+
+	for _, root in ipairs(roots) do
+		if root then
+			for _, node in ipairs(root:GetDescendants()) do
+				if isLikelyBasicButton(node) then
+					node.BackgroundTransparency = target
+				end
+			end
+		end
+	end
+end
+
+local function applyAnimationMode()
+	local elastic = uiAnimationsEnabled and Enum.ElasticBehavior.WhenScrollable or Enum.ElasticBehavior.Never
+	for _, node in ipairs(window:GetDescendants()) do
+		if node:IsA("ScrollingFrame") then
+			node.ElasticBehavior = elastic
+		end
+	end
+end
+
+local rainbowModeEnabled = false
+local rainbowModeConnection = nil
+local rainbowHue = math.random()
+local rainbowOriginalTheme = nil
+local rainbowOriginalWallpaper = nil
+local rainbowOriginalTextColors = {}
+local rainbowOriginalStrokeColors = {}
+local rainbowOriginalImageColors = {}
+local RAINBOW_MODE_WALLPAPER = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGwP-lrDJDnhl4cgiHftwT2Wmuh1J1ICQy0g&s"
+
+local function clearRainbowOriginals()
+	table.clear(rainbowOriginalTextColors)
+	table.clear(rainbowOriginalStrokeColors)
+	table.clear(rainbowOriginalImageColors)
+end
+
+local function shouldTintRainbowImage(node)
+	if not (node and node.Parent) then
+		return false
+	end
+	if node == window.wallpaper then
+		return false
+	end
+	if node.Name == "headshot" or node.Parent.Name == "headshot" then
+		return false
+	end
+	if top and top:FindFirstChild("functions") and node:IsDescendantOf(top.functions) then
+		return true
+	end
+	if node.Parent:FindFirstChild("interact") or (node.Parent.Parent and node.Parent.Parent:FindFirstChild("interact")) then
+		return true
+	end
+	return false
+end
+
+local function captureRainbowTargets()
+	clearRainbowOriginals()
+
+	for _, node in ipairs(window:GetDescendants()) do
+		if node:IsA("TextLabel") or node:IsA("TextButton") then
+			rainbowOriginalTextColors[node] = node.TextColor3
+		elseif node:IsA("UIStroke") then
+			rainbowOriginalStrokeColors[node] = node.Color
+		elseif (node:IsA("ImageLabel") or node:IsA("ImageButton")) and shouldTintRainbowImage(node) then
+			rainbowOriginalImageColors[node] = node.ImageColor3
+		end
+	end
+end
+
+local function applyRainbowColor(color)
+	syde:UpdateTheme({
+		Accent = color;
+		HitBox = color;
+	})
+
+	for node in pairs(rainbowOriginalTextColors) do
+		if node and node.Parent then
+			node.TextColor3 = color
+		end
+	end
+	for node in pairs(rainbowOriginalStrokeColors) do
+		if node and node.Parent then
+			node.Color = color
+		end
+	end
+	for node in pairs(rainbowOriginalImageColors) do
+		if node and node.Parent then
+			node.ImageColor3 = color
+		end
+	end
+end
+
+local function restoreRainbowState()
+	if rainbowOriginalTheme then
+		syde:UpdateTheme({
+			Accent = rainbowOriginalTheme.Accent;
+			HitBox = rainbowOriginalTheme.HitBox;
+		})
+	end
+
+	for node, original in pairs(rainbowOriginalTextColors) do
+		if node and node.Parent then
+			node.TextColor3 = original
+		end
+	end
+	for node, original in pairs(rainbowOriginalStrokeColors) do
+		if node and node.Parent then
+			node.Color = original
+		end
+	end
+	for node, original in pairs(rainbowOriginalImageColors) do
+		if node and node.Parent then
+			node.ImageColor3 = original
+		end
+	end
+
+	if rainbowOriginalWallpaper then
+		window.wallpaper.Image = rainbowOriginalWallpaper.Image
+		window.wallpaper.Visible = rainbowOriginalWallpaper.Visible
+		window.wallpaper.ison.Value = rainbowOriginalWallpaper.IsOn
+	end
+
+	local pluginsButton = top.functions and top.functions:FindFirstChild("plugins")
+	if pluginsButton and pluginsButton:FindFirstChild("rainbow") then
+		tweenOrSet(pluginsButton.rainbow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
+	end
+
+	clearRainbowOriginals()
+end
+
+local function setRainbowMode(enabled)
+	if rainbowModeEnabled == enabled then
+		return
+	end
+
+	rainbowModeEnabled = enabled
+	local pluginsButton = top.functions and top.functions:FindFirstChild("plugins")
+
+	if enabled then
+		rainbowOriginalTheme = {
+			Accent = syde.theme.Accent;
+			HitBox = syde.theme.HitBox;
+		}
+		rainbowOriginalWallpaper = {
+			Image = window.wallpaper.Image;
+			Visible = window.wallpaper.Visible;
+			IsOn = window.wallpaper.ison.Value;
+		}
+
+		local rainbowWallpaperSource = RAINBOW_MODE_WALLPAPER
+		local resolvedWallpaper = resolveWallpaperSource(rainbowWallpaperSource)
+		if resolvedWallpaper then
+			rainbowWallpaperSource = resolvedWallpaper
+		end
+		window.wallpaper.Image = rainbowWallpaperSource
+		window.wallpaper.Visible = true
+		window.wallpaper.ison.Value = true
+
+		captureRainbowTargets()
+
+		if pluginsButton and pluginsButton:FindFirstChild("rainbow") then
+			tweenOrSet(pluginsButton.rainbow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+		end
+
+		rainbowModeConnection = runservice.RenderStepped:Connect(function(dt)
+			rainbowHue = (rainbowHue + dt * 0.2) % 1
+			applyRainbowColor(Color3.fromHSV(rainbowHue, 1, 1))
+		end)
+	else
+		if rainbowModeConnection then
+			rainbowModeConnection:Disconnect()
+			rainbowModeConnection = nil
+		end
+		restoreRainbowState()
+	end
+end
+
+applyAnimationMode()
 
 function applyLayout(isMobile)
 	--	Library.lib.Size = isMobile and UDim2.new(0, 543,0, 321) or UDim2.new(0, 715, 0, 575)
@@ -1939,7 +2403,7 @@ function syde:Modal(Modal)
 		local ModalData = {
 			Title = Modal.Title;
 			Content = Modal.Content;
-			ConfirmCallBack = Modal.ConfimCallBack
+			ConfirmCallBack = Modal.ConfirmCallBack or Modal.ConfimCallBack
 		}
 
 		local ModalInstance = ui.main.modal:Clone()
@@ -1953,13 +2417,29 @@ function syde:Modal(Modal)
 		ModalInstance.Title.TextTransparency = 1
 		ModalInstance.Content.TextTransparency = 1
 
-		ModalInstance.Buttons.Confirm.BackgroundTransparency = 1
-		ModalInstance.Buttons.Confirm.TextLabel.TextTransparency = 1
-		--	ModalInstance.Buttons.Confirm.UIStroke.Transparency = 1
+		local ButtonsFrame = ModalInstance:FindFirstChild("Buttons")
+		local ConfirmButton = ButtonsFrame and ButtonsFrame:FindFirstChild("Confirm")
+		local CancelButton = ButtonsFrame and ButtonsFrame:FindFirstChild("Cancel")
+		local ConfirmLabel = ConfirmButton and ConfirmButton:FindFirstChild("TextLabel")
+		local CancelLabel = CancelButton and CancelButton:FindFirstChild("TextLabel")
+		local CancelStroke = CancelButton and CancelButton:FindFirstChild("UIStroke")
 
-		ModalInstance.Buttons.Cancel.BackgroundTransparency = 1
-		ModalInstance.Buttons.Cancel.TextLabel.TextTransparency = 1
-		ModalInstance.Buttons.Cancel.UIStroke.Transparency = 1
+		if ConfirmButton then
+			ConfirmButton.BackgroundTransparency = 1
+		end
+		if ConfirmLabel then
+			ConfirmLabel.TextTransparency = 1
+		end
+
+		if CancelButton then
+			CancelButton.BackgroundTransparency = 1
+		end
+		if CancelLabel then
+			CancelLabel.TextTransparency = 1
+		end
+		if CancelStroke then
+			CancelStroke.Transparency = 1
+		end
 
 		local function openModal()
 			tweenservice:Create(ModalInstance.Content, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(1, ModalInstance.Content.Size.X.Offset, 1, ModalInstance.Content.TextBounds.Y)}):Play()
@@ -1972,40 +2452,73 @@ function syde:Modal(Modal)
 			tweenservice:Create(ModalInstance.Title, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 			tweenservice:Create(ModalInstance.Content, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 
-			tweenservice:Create(ModalInstance.Buttons.Confirm, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.5}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Confirm.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-			--	tweenservice:Create(ModalInstance.Buttons.Confirm.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
+			if ConfirmButton then
+				tweenservice:Create(ConfirmButton, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.5}):Play()
+			end
+			if ConfirmLabel then
+				tweenservice:Create(ConfirmLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+			end
 
-			tweenservice:Create(ModalInstance.Buttons.Cancel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Cancel.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Cancel.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
+			if CancelButton then
+				tweenservice:Create(CancelButton, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			end
+			if CancelLabel then
+				tweenservice:Create(CancelLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+			end
+			if CancelStroke then
+				tweenservice:Create(CancelStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 0}):Play()
+			end
 
 		end
 		openModal()
 
 		local function closeModal()
-			activeModals -= 1
-			print(activeModals)
-			ModalInstance.Buttons.Cancel.Interactable = false
-			ModalInstance.Buttons.Confirm.Interactable = false
+			activeModals = math.max(activeModals - 1, 0)
+			if CancelButton then
+				pcall(function()
+					CancelButton.Interactable = false
+				end)
+			end
+			if ConfirmButton then
+				pcall(function()
+					ConfirmButton.Interactable = false
+				end)
+			end
 			tweenservice:Create(ModalInstance, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 350,0, 147)}):Play()
 			tweenservice:Create(ModalInstance, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
 			tweenservice:Create(ModalInstance.Title, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
 			tweenservice:Create(ModalInstance.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
 			tweenservice:Create(ModalInstance.Content, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
 
-			tweenservice:Create(ModalInstance.Buttons.Confirm, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Confirm.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-			--	tweenservice:Create(ModalInstance.Buttons.Confirm.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+			if ConfirmButton then
+				tweenservice:Create(ConfirmButton, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			end
+			if ConfirmLabel then
+				tweenservice:Create(ConfirmLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			end
 
-			tweenservice:Create(ModalInstance.Buttons.Cancel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Cancel.TextLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
-			tweenservice:Create(ModalInstance.Buttons.Cancel.UIStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+			if CancelButton then
+				tweenservice:Create(CancelButton, TweenInfo.new(1, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1}):Play()
+			end
+			if CancelLabel then
+				tweenservice:Create(CancelLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), {TextTransparency = 1}):Play()
+			end
+			if CancelStroke then
+				tweenservice:Create(CancelStroke, TweenInfo.new(1, Enum.EasingStyle.Exponential), {Transparency = 1}):Play()
+			end
 			task.wait(0.45)
 			ModalInstance:Destroy()
 		end
 
-
+		local function hideDimIfNoModals()
+			if activeModals == 0 then
+				tweenservice:Create(ui.main.dim, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {
+					BackgroundTransparency = 1
+				}):Play()
+				task.wait(0.7)
+				ui.main.dim.Visible = false
+			end
+		end
 
 		if activeModals == 1 then
 			ui.main.dim.Visible = true
@@ -2014,30 +2527,23 @@ function syde:Modal(Modal)
 			}):Play()
 		end
 
-		ModalInstance.Buttons.Confirm.MouseButton1Click:Connect(function()
-			if typeof(ModalData.ConfirmCallBack) == "function" then
-				ModalData.ConfirmCallBack()
-			end
+		if ConfirmButton and ConfirmButton:IsA("GuiButton") then
+			ConfirmButton.MouseButton1Click:Connect(function()
+				if typeof(ModalData.ConfirmCallBack) == "function" then
+					ModalData.ConfirmCallBack()
+				end
 
-			closeModal()
+				closeModal()
+				hideDimIfNoModals()
+			end)
+		end
 
-			if activeModals == 0 then
-				tweenservice:Create(ui.main.dim, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {
-					BackgroundTransparency = 1
-				}):Play()
-				task.wait(0.7)
-				ui.main.dim.Visible = false
-			end
-		end)
-
-		ModalInstance.Buttons.Cancel.MouseButton1Click:Connect(function()
-			closeModal()
-			tweenservice:Create(ui.main.dim, TweenInfo.new(0.73, Enum.EasingStyle.Exponential), {
-				BackgroundTransparency = 1
-			}):Play()
-			task.wait(0.7)
-			ui.main.dim.Visible = false
-		end)
+		if CancelButton and CancelButton:IsA("GuiButton") then
+			CancelButton.MouseButton1Click:Connect(function()
+				closeModal()
+				hideDimIfNoModals()
+			end)
+		end
 
 	end)
 end
@@ -2188,39 +2694,43 @@ function opensearch()
 
 
 	if window.search.Frame.TextBox.Text ~= '' then
-		tweenservice:Create(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 230) }):Play()
+		tweenOrSet(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 230) })
 	else
-		tweenservice:Create(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 60) }):Play()
+		tweenOrSet(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 60) })
 	end
 
-	tweenservice:Create(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.45 }):Play()
-	tweenservice:Create(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 }):Play()
-	tweenservice:Create(window.search.Frame.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+	tweenOrSet(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.45 })
+	tweenOrSet(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
+	tweenOrSet(window.search.Frame.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
 
-	tweenservice:Create(window.search.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 }):Play()
-	tweenservice:Create(window.search.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+	tweenOrSet(window.search.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
+	tweenOrSet(window.search.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
 
-	tweenservice:Create(window.search.Frame.TextBox, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
+	tweenOrSet(window.search.Frame.TextBox, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0 })
 end
 
 function closesearch()
 	searchopen = false
 	window.search.Container.Visible = false
-	tweenservice:Create(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 60) }):Play()
-	tweenservice:Create(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
-	tweenservice:Create(window.search.Frame.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+	tweenOrSet(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 350,0, 60) })
+	tweenOrSet(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
+	tweenOrSet(window.search, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
+	tweenOrSet(window.search.Frame.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
 
-	tweenservice:Create(window.search.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
-	tweenservice:Create(window.search.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+	tweenOrSet(window.search.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
+	tweenOrSet(window.search.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
 
-	tweenservice:Create(window.search.Frame.TextBox, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
-	task.wait(0.5)
+	tweenOrSet(window.search.Frame.TextBox, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 })
+	if uiAnimationsEnabled then
+		task.wait(0.5)
+	end
 	window.dim.Visible = false
 	window.search.Visible = false
 end
 
 --@ ToggleUI
+
+local opensettings, closesettings
 
 function openui()
 	pages.Visible = true
@@ -2234,52 +2744,58 @@ function openui()
 			Transparency = 0.98;
 			BrickColor = BrickColor.new('Institutional white');
 		})
-		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.45 }):Play()
+		tweenOrSet(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.45 })
 	else
-		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
+		tweenOrSet(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 })
 	end
-	tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 700,0, 560) }):Play()
+	tweenOrSet(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(0, 700,0, 560) })
 
-	tweenservice:Create(window.top.separator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
-	tweenservice:Create(window.top.title, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 0 }):Play()
-	tweenservice:Create(window.top.title.sub, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 0 }):Play()
+	tweenOrSet(window.top.separator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 })
+	tweenOrSet(window.top.title, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 0 })
+	tweenOrSet(window.top.title.sub, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 0 })
 
-	tweenservice:Create(window.top.functions, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
+	tweenOrSet(window.top.functions, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {
+		BackgroundTransparency = getTopFunctionsContainerTransparency()
+	})
 
 	if window.wallpaper.ison.Value  then
-		tweenservice:Create(window.wallpaper, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.84 }):Play()
+		tweenOrSet(window.wallpaper, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.84 })
 	end
 
 
 	for i,v in pairs(window.top.functions:GetChildren()) do
 		if v:IsA("Frame") then
-			tweenservice:Create(v, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.8 }):Play()
+			tweenOrSet(v, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {
+				BackgroundTransparency = getTopFunctionBaseTransparency()
+			})
 			v.Visible = true
 			for i,v2 in pairs(v:GetChildren()) do
 				if v2:IsA("ImageLabel") then
-					tweenservice:Create(v2, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 }):Play()
+					tweenOrSet(v2, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0 })
 					v2.Visible = true
 				end
 			end
 			if v:FindFirstChild("rainbow") then
-				tweenservice:Create(v.rainbow, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+				tweenOrSet(v.rainbow, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 })
 			end
 
 		end
 	end
 
-	tweenservice:Create(window.shadow.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.5 }):Play()
-	tweenservice:Create(window.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.3}):Play()
+	applyTopFunctionBackgrounds(false)
+
+	tweenOrSet(window.shadow.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.5 })
+	tweenOrSet(window.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 0.3})
 
 	if glow == true then
 		for i, glow in pairs(window.clipframe:GetChildren()) do
 			if glow:IsA("ImageLabel") then
-				tweenservice:Create(glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.8}):Play()
+				tweenOrSet(glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.8})
 			end
 		end
 
-		tweenservice:Create(window.shadow.glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.9}):Play()
-		tweenservice:Create(window.shadow.glow1, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.9}):Play()
+		tweenOrSet(window.shadow.glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.9})
+		tweenOrSet(window.shadow.glow1, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 0.9})
 	end
 
 
@@ -2290,29 +2806,29 @@ function closeui()
 	window.tabs.Visible = false
 	window.user.Visible = false
 
-	tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(window.Size.X.Scale, window.Size.X.Offset, window.Size.Y.Scale, 200) }):Play()
+	tweenOrSet(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 })
+	tweenOrSet(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {Size = UDim2.new(window.Size.X.Scale, window.Size.X.Offset, window.Size.Y.Scale, 200) })
 
-	tweenservice:Create(window.top.separator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
-	tweenservice:Create(window.top.title, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
-	tweenservice:Create(window.top.title.sub, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 }):Play()
+	tweenOrSet(window.top.separator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 })
+	tweenOrSet(window.top.title, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 })
+	tweenOrSet(window.top.title.sub, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {TextTransparency = 1 })
 
 	if window.wallpaper.ison.Value  then
-		tweenservice:Create(window.wallpaper, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+		tweenOrSet(window.wallpaper, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 })
 	end
 
 
 	syde:UnbindFrame(window)
 
 
-	tweenservice:Create(window.top.functions, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
+	tweenOrSet(window.top.functions, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 })
 	for i,v in pairs(window.top.functions:GetChildren()) do
 		if v:IsA("Frame") then
-			tweenservice:Create(v, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 }):Play()
+			tweenOrSet(v, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 1 })
 			v.Visible = false
 			for i,v2 in pairs(v:GetChildren()) do
 				if v2:IsA("ImageLabel") then
-					tweenservice:Create(v2, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+					tweenOrSet(v2, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 })
 					v2.Visible = false
 				end
 			end
@@ -2321,21 +2837,24 @@ function closeui()
 
 	for i, glow in pairs(window.clipframe:GetChildren()) do
 		if glow:IsA("ImageLabel") then
-			tweenservice:Create(glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1}):Play()
+			tweenOrSet(glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1})
 		end
 	end
 
-	tweenservice:Create(window.shadow.glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1}):Play()
-	tweenservice:Create(window.shadow.glow1, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1}):Play()
+	tweenOrSet(window.shadow.glow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1})
+	tweenOrSet(window.shadow.glow1, TweenInfo.new(0.5, Enum.EasingStyle.Exponential),{ImageTransparency = 1})
 
-	tweenservice:Create(window.shadow.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
-	tweenservice:Create(window.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 }):Play()
+	tweenOrSet(window.shadow.ImageLabel, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 })
+	tweenOrSet(window.resize, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {ImageTransparency = 1 })
 
 	closesettings()
 	closesearch()
 	settingsOpen = false
 
 
+	if uiAnimationsEnabled then
+		task.wait(0.4)
+	end
 
 	--task.wait(0.5)
 
@@ -2386,6 +2905,7 @@ window.top.functions.close.interact.MouseButton1Click:Connect(function()
 		Content = 'Are You Sure You Want To Close This UI?',
 		ConfimCallBack = function()
 			mh = false
+			setRainbowMode(false)
 			rs:Disconnect()
 			ss:Disconnect()
 			--	if not ui.Parent then return end
@@ -2472,17 +2992,116 @@ function syde:Init(library)
 	Data.Home.hSubText = Data.Home.hSubText or Data.SubText
 	Data.Home.profileImage = Data.Home.profileImage or Data.profileImage
 	
-	local Minihome = ui.minihome
+	local Minihome = ui:FindFirstChild("minihome")
 
 	local MinihomeData = {
 		QuickActions = library.QuickActions or false;
 	}
 
+local function applyMinihomeInfoTransparency()
+	if not (mh and Minihome) then
+		return
+	end
+
+	local targetBg = bluron and 0.78 or nil
+	local targetStroke = bluron and 0.78 or nil
+	local targetImage = bluron and 0.35 or nil
+	local targetText = bluron and 0 or nil
+	local blurTextColor = Color3.fromRGB(246, 246, 246)
+
+	local nodes = { Minihome }
+	for _, node in ipairs(Minihome:GetDescendants()) do
+		table.insert(nodes, node)
+	end
+
+	for _, node in ipairs(nodes) do
+		if node:IsA("GuiObject") then
+			local bgAttr = "__syde_bg_original"
+			local originalBg = node:GetAttribute(bgAttr)
+			if originalBg == nil then
+				node:SetAttribute(bgAttr, node.BackgroundTransparency)
+					originalBg = node.BackgroundTransparency
+				end
+
+			if targetBg then
+				node.BackgroundTransparency = math.max(originalBg, targetBg)
+			else
+				node.BackgroundTransparency = originalBg
+			end
+
+			if node:IsA("ImageLabel") or node:IsA("ImageButton") then
+				local imgAttr = "__syde_img_original"
+				local originalImg = node:GetAttribute(imgAttr)
+				if originalImg == nil then
+					node:SetAttribute(imgAttr, node.ImageTransparency)
+					originalImg = node.ImageTransparency
+				end
+
+				if targetImage then
+					node.ImageTransparency = math.max(originalImg, targetImage)
+				else
+					node.ImageTransparency = originalImg
+				end
+			end
+
+			if node:IsA("TextLabel") or node:IsA("TextButton") then
+				local textAttr = "__syde_txt_original"
+				local originalText = node:GetAttribute(textAttr)
+				if originalText == nil then
+					node:SetAttribute(textAttr, node.TextTransparency)
+					originalText = node.TextTransparency
+				end
+
+				if targetText ~= nil then
+					node.TextTransparency = math.min(originalText, targetText)
+				else
+					node.TextTransparency = originalText
+				end
+
+				local textColorAttr = "__syde_txt_color_original"
+				local originalTextColor = node:GetAttribute(textColorAttr)
+				if originalTextColor == nil then
+					node:SetAttribute(textColorAttr, node.TextColor3)
+					originalTextColor = node.TextColor3
+				end
+
+				if bluron then
+					node.TextColor3 = blurTextColor
+				else
+					node.TextColor3 = originalTextColor
+				end
+			end
+		elseif node:IsA("UIStroke") then
+			local strokeAttr = "__syde_stroke_original"
+			local originalStroke = node:GetAttribute(strokeAttr)
+			if originalStroke == nil then
+					node:SetAttribute(strokeAttr, node.Transparency)
+					originalStroke = node.Transparency
+				end
+
+				if targetStroke then
+					node.Transparency = math.max(originalStroke, targetStroke)
+				else
+					node.Transparency = originalStroke
+				end
+			end
+		end
+	end
+
+	local function getMinihomeTimeText()
+		if use24HourClock then
+			return os.date("%H:%M")
+		end
+
+		local hour12 = tonumber(os.date("%I")) or 12
+		return string.format("%d:%s", hour12, os.date("%M"))
+	end
+
 	-- FPS tracking
 	local lastTime = tick()
 	local frames = 0
 
-	if mh then
+	if mh and Minihome then
 		rs = RunService.RenderStepped:Connect(function()
 			-- FPS
 			frames += 1
@@ -2493,26 +3112,51 @@ function syde:Init(library)
 				lastTime = now
 				frames = 0
 
-				Minihome.info.fps.Text = fps .. " FPS"
+				if Minihome:FindFirstChild("info") and Minihome.info:FindFirstChild("fps") then
+					Minihome.info.fps.Text = fps .. " FPS"
+				end
 			end
 
 			-- Time → 8:45
-			local hour = tonumber(os.date("%I"))
-			Minihome.info.time.Text = hour .. os.date(":%M")
+			if Minihome:FindFirstChild("info") and Minihome.info:FindFirstChild("time") then
+				Minihome.info.time.Text = getMinihomeTimeText()
+			end
 		end)
 
 
 		if MinihomeData.QuickActions == false then
-			ui.minihome.quick.Visible = false
-			ui.minihome:TweenSize(UDim2.new(0, 150, 0, 40), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.8, true)
+			if Minihome:FindFirstChild("quick") then
+				Minihome.quick.Visible = false
+			end
+			Minihome:TweenSize(UDim2.new(0, 150, 0, 40), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.8, true)
 		end
 	end
 
+	applyMinihomeInfoTransparency()
 
-	if not uiclosed then
-		ui.minihome.open.quickfunc.interact.MouseButton1Click:Connect(function()
-			ToggleUI()
-		end)
+
+	if not uiclosed and Minihome then
+		local open = Minihome:FindFirstChild("open")
+		local quickfunc = open and open:FindFirstChild("quickfunc")
+		local interact = quickfunc and quickfunc:FindFirstChild("interact")
+		if interact and interact:IsA("GuiButton") then
+			interact.MouseButton1Click:Connect(function()
+				ToggleUI()
+			end)
+		end
+	end
+
+	if mh and Minihome then
+		local miniDragHandle = Minihome:FindFirstChild("info")
+		if not (miniDragHandle and miniDragHandle:IsA("GuiObject")) then
+			miniDragHandle = Minihome
+		end
+
+		if miniDragHandle and miniDragHandle:IsA("GuiObject") then
+			miniDragHandle.Active = true
+			Minihome.Active = true
+			syde:AddDrag(miniDragHandle, Minihome, true)
+		end
 	end
 
 	--ui elements
@@ -2574,17 +3218,21 @@ function syde:Init(library)
 		v.MouseEnter:Connect(function()
 			if not uiclosed then
 				if v.Name ~= "plugins" then
-					TweenService:Create(
-						image,
-						TweenInfo.new(0.5, Enum.EasingStyle.Exponential),
-						{ ImageTransparency = 0.7 }
-					):Play()
+					tweenOrSet(image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+						ImageTransparency = 0.7
+					})
 				end
+				tweenOrSet(v, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), {
+					BackgroundTransparency = getTopFunctionHoverTransparency()
+				})
 			end
 
 
 			if v.Name == "plugins" and gradient then
-				tweenservice:Create(v.rainbow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+				tweenOrSet(v.rainbow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+				if rainbowModeEnabled then
+					return
+				end
 				local state = RainbowStates[v]
 				if state.connection then return end
 
@@ -2608,17 +3256,28 @@ function syde:Init(library)
 		v.MouseLeave:Connect(function()
 			if not uiclosed then
 				if v.Name ~= "plugins" then
-					TweenService:Create(
-						image,
-						TweenInfo.new(0.5, Enum.EasingStyle.Exponential),
-						{ ImageTransparency = 0 }
-					):Play()
+					tweenOrSet(image, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+						ImageTransparency = 0
+					})
 				end
+				tweenOrSet(v, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), {
+					BackgroundTransparency = getTopFunctionBaseTransparency()
+				})
 			end
 
 
 			if v.Name == "plugins" then
-				tweenservice:Create(v.rainbow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+				if rainbowModeEnabled then
+					tweenOrSet(v.rainbow, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+					local state = RainbowStates[v]
+					if state and state.connection then
+						state.connection:Disconnect()
+						state.connection = nil
+					end
+					return
+				end
+
+				tweenOrSet(v.rainbow, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
 				local state = RainbowStates[v]
 				if state and state.connection then
 					state.connection:Disconnect()
@@ -2656,6 +3315,12 @@ function syde:Init(library)
 			debounce = false
 		end)
 	end)
+
+	if top.functions:FindFirstChild("plugins") and top.functions.plugins:FindFirstChild("interact") then
+		top.functions.plugins.interact.MouseButton1Click:Connect(function()
+			setRainbowMode(not rainbowModeEnabled)
+		end)
+	end
 
 
 
@@ -2838,6 +3503,7 @@ function syde:Init(library)
 		layout:Bind()
 		layout:Update()
 
+		print("LATENCY SCRIPT RUNNING")
 
 		local Stats = game:GetService("Stats")
 		local TweenService = game:GetService("TweenService")
@@ -3262,34 +3928,38 @@ function syde:Init(library)
 		window.settings.Visible = true
 		window.dim.Visible = true
 
-		tweenservice:Create(window.settings, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 360,0, 400)}):Play()
-		tweenservice:Create(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.2 }):Play()
-		tweenservice:Create(window.settings.UICorner, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { CornerRadius = UDim.new(0,20)}):Play()
+		tweenOrSet(window.settings, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 360,0, 400)})
+		tweenOrSet(window.dim, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.2 })
+		tweenOrSet(window.settings.UICorner, TweenInfo.new(0.5, Enum.EasingStyle.Quart), { CornerRadius = UDim.new(0,20)})
 
-		tweenservice:Create(window.settings, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0}):Play()
+		tweenOrSet(window.settings, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0})
 		window.settings.pages.Visible = true
 		window.settings.tabs.Visible = true
 
-		tweenservice:Create(window.settings.top.title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0}):Play()
-		tweenservice:Create(window.settings.top.separator, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0}):Play()
-		tweenservice:Create(window.settings.top.functions.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0}):Play()
-		tweenservice:Create(window.settings.top.functions.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0}):Play()
+		tweenOrSet(window.settings.top.title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0})
+		tweenOrSet(window.settings.top.separator, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0})
+		tweenOrSet(window.settings.top.functions.close, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {
+			BackgroundTransparency = getTopFunctionBaseTransparency()
+		})
+		tweenOrSet(window.settings.top.functions.close.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 0})
 	end
 
 	function closesettings()
-		tweenservice:Create(window.settings, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 360,0, 150)}):Play()
-		tweenservice:Create(window.dim, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
-		tweenservice:Create(window.settings.UICorner, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { CornerRadius = UDim.new(0, 90)}):Play()
+		tweenOrSet(window.settings, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { Size = UDim2.new(0, 360,0, 150)})
+		tweenOrSet(window.dim, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
+		tweenOrSet(window.settings.UICorner, TweenInfo.new(0.35, Enum.EasingStyle.Quart), { CornerRadius = UDim.new(0, 90)})
 
-		tweenservice:Create(window.settings, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
+		tweenOrSet(window.settings, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
 		window.settings.pages.Visible = false
 		window.settings.tabs.Visible = false
 
-		tweenservice:Create(window.settings.top.title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { TextTransparency = 1}):Play()
-		tweenservice:Create(window.settings.top.separator, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
-		tweenservice:Create(window.settings.top.functions.close, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1}):Play()
-		tweenservice:Create(window.settings.top.functions.close.ImageLabel, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { ImageTransparency = 1}):Play()
-		task.wait(0.6)
+		tweenOrSet(window.settings.top.title, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { TextTransparency = 1})
+		tweenOrSet(window.settings.top.separator, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
+		tweenOrSet(window.settings.top.functions.close, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1})
+		tweenOrSet(window.settings.top.functions.close.ImageLabel, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { ImageTransparency = 1})
+		if uiAnimationsEnabled then
+			task.wait(0.6)
+		end
 		window.settings.Visible = false
 		window.dim.Visible = false
 	end
@@ -3428,6 +4098,7 @@ function syde:Init(library)
 				button.title.Text = data.Title
 				button.Name = data.Title
 				button.title.Size = UDim2.new(0, button.title.TextBounds.X + 15,0, 35)
+				button.BackgroundTransparency = getBasicButtonTransparency()
 
 				local c
 
@@ -3441,14 +4112,13 @@ function syde:Init(library)
 					-- UI Stroke effect on button press
 
 					button.interact.MouseButton1Down:Connect(function()
-						tweenservice:Create(button.UIStroke, fOTween, { Transparency = 1 }):Play()
-						tweenservice:Create(button.ImageLabel, fOTween, { ImageTransparency = 1 }):Play()
-						tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+						tweenOrSet(button.UIStroke, fOTween, { Transparency = 1 })
+						tweenOrSet(button.ImageLabel, fOTween, { ImageTransparency = 1 })
 					end)
 
 					button.interact.MouseButton1Up:Connect(function()
-						tweenservice:Create(button.UIStroke, fITween, { Transparency = 0 }):Play()
-						tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 }):Play()
+						tweenOrSet(button.UIStroke, fITween, { Transparency = 0 })
+						tweenOrSet(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 })
 
 
 					end)
@@ -3467,8 +4137,8 @@ function syde:Init(library)
 
 					-- Extra Check 
 					button.interact.MouseLeave:Connect(function()
-						tweenservice:Create(button.UIStroke, fITween, { Transparency = 0 }):Play()
-						tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 }):Play()
+						tweenOrSet(button.UIStroke, fITween, { Transparency = 0 })
+						tweenOrSet(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 })
 					end)
 				elseif data.Type == 'Hold' then
 					local HoldTime = data.HoldTime
@@ -3633,15 +4303,23 @@ function syde:Init(library)
 				local fadeTween = TweenInfo.new(0.57, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
 
 				local function UpdateToggleUI(state)
-					local targetColor = state and syde.theme.HitBox or Color3.fromRGB(28, 28, 28)
-					local strokeTransparency = state and 1 or 0
+					local targetColor = state and syde.theme.HitBox or Color3.fromRGB(45, 45, 45)
+					local strokeTransparency = state and 0.2 or 0
 					local checkTransparency = state and 0 or 1
-					local gradientTransparency = state and 0 or 1
-					local glowTransparency = state and 0.7 or 1
-					local textTransparency = state and 0 or 0.5
+					local gradientTransparency = state and 0.15 or 0.55
+					local glowTransparency = state and 0.72 or 1
+					local textTransparency = state and 0 or 0.25
 
-					tweenservice:Create(toggle.tog, toggleTween, { BackgroundColor3 = targetColor }):Play()
-					--	tweenservice:Create(toggle.tog.UIStroke, toggleTween, { Transparency = strokeTransparency }):Play()
+					tweenservice:Create(toggle.tog, toggleTween, {
+						BackgroundColor3 = targetColor,
+						BackgroundTransparency = state and 0 or 0.12
+					}):Play()
+					if toggle.tog:FindFirstChild("UIStroke") then
+						tweenservice:Create(toggle.tog.UIStroke, toggleTween, {
+							Transparency = strokeTransparency,
+							Color = state and syde.theme.HitBox or Color3.fromRGB(78, 78, 78)
+						}):Play()
+					end
 					tweenservice:Create(toggle.tog.check, toggleTween, { ImageTransparency = checkTransparency }):Play()
 					tweenservice:Create(toggle.tog.gradfr, fadeTween, { BackgroundTransparency = gradientTransparency }):Play()
 					tweenservice:Create(toggle.tog.glow, toggleTween, { ImageTransparency = glowTransparency }):Play()
@@ -4279,11 +4957,14 @@ function syde:Init(library)
 
 					table.sort(Keys, function(a,b) return a.Time < b.Time end)
 
-					Keys[1] = ColorSequenceKeypoint.new(0, Keys[2].Value)
-					Keys[4] = ColorSequenceKeypoint.new(1, Keys[3].Value)
+					local leftInnerIndex = (#Keys >= 2) and 2 or 1
+					local rightInnerIndex = (#Keys >= 2) and (#Keys - 1) or #Keys
 
-					data.Color  = Keys[2].Value
-					data.Color2 = Keys[3].Value
+					Keys[1] = ColorSequenceKeypoint.new(0, Keys[leftInnerIndex].Value)
+					Keys[#Keys] = ColorSequenceKeypoint.new(1, Keys[rightInnerIndex].Value)
+
+					data.Color = Keys[leftInnerIndex].Value
+					data.Color2 = Keys[rightInnerIndex].Value
 
 					local seq = ColorSequence.new(Keys)
 					ExternalGradient.Color = seq
@@ -4315,24 +4996,6 @@ function syde:Init(library)
 
 					GradientFrame.Pin1.BackgroundColor3 = startCol
 					GradientFrame.Pin2.BackgroundColor3 = endCol
-				end
-
-				local oldCallback = data.CallBack
-				data.CallBack = function(col)
-					if data.Type ~= "Gradient" then
-						if oldCallback then oldCallback(col) end
-						return
-					end
-
-					table.sort(Keys, function(a,b) return a.Time < b.Time end)
-					Keys[1] = ColorSequenceKeypoint.new(0, Keys[1].Value)
-					Keys[#Keys] = ColorSequenceKeypoint.new(1, Keys[#Keys].Value)
-
-					local seq = ColorSequence.new(Keys)
-					ExternalGradient.Color = seq
-					GradientFrame.Gradient.Color = seq
-
-					if oldCallback then oldCallback(seq) end
 				end
 
 				if data.Type == "Gradient" then
@@ -5159,7 +5822,7 @@ function syde:Init(library)
 
 						if OptionText == data.StarterOption and not starterSet then
 							starterSet = true
-							dropdown.dropholder.drop.Selected.Text = OptionText
+							dropdown.dropholder.drop.selected.Text = OptionText
 							SelectedOptions = {[OptionText] = true}
 							SelectedOrder = {OptionText}
 
@@ -5252,7 +5915,10 @@ function syde:Init(library)
 					}
 
 					Slider.Name = Options.Title
-					Slider.Title.Text = Options.Title
+					local sliderTitleLabel = getSliderTitleLabel(Slider)
+					if sliderTitleLabel and sliderTitleLabel:IsA("TextLabel") then
+						sliderTitleLabel.Text = Options.Title
+					end
 					Options.Value = Options.StarterValue
 
 					local dragging = false
@@ -5396,7 +6062,10 @@ function syde:Init(library)
 							Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", newValue, Options.Range[2])
 
 
-							tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+							local titleLabel = getSliderTitleLabel(Slider)
+							if titleLabel and titleLabel:IsA("TextLabel") then
+								tweenservice:Create(titleLabel, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+							end
 
 							local success, errorMsg = pcall(function()
 								Options.CallBack(newValue)
@@ -5420,7 +6089,10 @@ function syde:Init(library)
 					syde:AddConnection(userinput.InputEnded, function(input, processed)
 						if input.UserInputType == Enum.UserInputType.MouseButton1  or input.UserInputType == Enum.UserInputType.Touch then
 							dragging = false
-							tweenservice:Create(Slider.Title, TweenInfo.new( 0.5, Enum.EasingStyle.Exponential ), { TextTransparency = 0.6 }):Play()
+							local titleLabel = getSliderTitleLabel(Slider)
+							if titleLabel and titleLabel:IsA("TextLabel") then
+								tweenservice:Create(titleLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0.6 }):Play()
+							end
 						end
 					end)
 
@@ -5484,9 +6156,12 @@ function syde:Init(library)
 						)
 
 						-- Tween title appearance
-						tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {
-							TextTransparency = 0
-						}):Play()
+						local titleLabel = getSliderTitleLabel(Slider)
+						if titleLabel and titleLabel:IsA("TextLabel") then
+							tweenservice:Create(titleLabel, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {
+								TextTransparency = 0
+							}):Play()
+						end
 
 						-- Callback
 						local success, result = pcall(function()
@@ -5593,14 +6268,70 @@ function syde:Init(library)
 				return ParagraphSettings
 			end
 
+			function telement:Img(ImgData)
+				local data = {
+					Title = ImgData and (ImgData.Title or "Image") or "Image";
+					Image = ImgData and (ImgData.Image or ImgData.Id) or "";
+					Height = ImgData and (ImgData.Height or 180) or 180;
+				}
+
+				local imageFrame = Instance.new("Frame")
+				imageFrame.Name = data.Title
+				imageFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+				imageFrame.BackgroundTransparency = getBasicButtonTransparency()
+				imageFrame.Size = UDim2.new(1, -35, 0, data.Height + 36)
+				imageFrame.Parent = Page
+
+				local corner = Instance.new("UICorner")
+				corner.CornerRadius = UDim.new(0, 20)
+				corner.Parent = imageFrame
+
+				local title = Instance.new("TextLabel")
+				title.Name = "title"
+				title.BackgroundTransparency = 1
+				title.Font = Enum.Font.GothamMedium
+				title.TextSize = 14
+				title.TextColor3 = Color3.fromRGB(230, 230, 230)
+				title.TextXAlignment = Enum.TextXAlignment.Left
+				title.Text = data.Title
+				title.Size = UDim2.new(1, -20, 0, 24)
+				title.Position = UDim2.new(0, 10, 0, 6)
+				title.Parent = imageFrame
+
+				local image = Instance.new("ImageLabel")
+				image.Name = "ImageLabel"
+				image.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+				image.BackgroundTransparency = 0.15
+				image.BorderSizePixel = 0
+				image.Image = normalizeImageSource(data.Image)
+				image.ScaleType = Enum.ScaleType.Fit
+				image.Size = UDim2.new(1, -20, 0, data.Height)
+				image.Position = UDim2.new(0, 10, 0, 30)
+				image.Parent = imageFrame
+
+				local imageCorner = Instance.new("UICorner")
+				imageCorner.CornerRadius = UDim.new(0, 14)
+				imageCorner.Parent = image
+
+				return imageFrame
+			end
+
+			function telement:Image(ImageData)
+				return self:Img(ImageData)
+			end
+
 			function telement:TextInput(TextInput)
 				local data = {
+					Type = "TextInput",
 					Title = TextInput.Title or "Text Input",
 					PlaceHolder = TextInput.PlaceHolder or "Enter text...",
 					NumbersOnly = TextInput.NumberOnly or false,
 					ClearOnLost = TextInput.ClearOnLost == nil and true or TextInput.ClearOnLost,
 					--	MaxSize = TextInput.MaxSize or 100,
 					CallBack = TextInput.CallBack,
+					OnChanged = TextInput.OnChanged,
+					SFlag = TextInput.SFlag,
+					Text = tostring(TextInput.Value or ""),
 				}
 
 				local textinput =  window.settings.pages.page.Input:Clone()
@@ -5611,6 +6342,7 @@ function syde:Init(library)
 				textinput.TextFrame.TextBox.PlaceholderText = data.PlaceHolder
 
 				local textBox = textinput.TextFrame.TextBox
+				textBox.Text = data.Text
 				local defaultHeight = 32
 				--	local maxHeight = data.MaxSize
 				local ignoreNextClear = false
@@ -5642,6 +6374,15 @@ function syde:Init(library)
 						local newHeight = math.min(textSize.Y + 18, 120 + 50)
 						textBox.Size = UDim2.new(1, -60, 0, newHeight)
 
+					end
+
+					if typeof(data.OnChanged) == "function" then
+						local ok, err = pcall(function()
+							data.OnChanged(textBox.Text)
+						end)
+						if not ok then
+							warn("Error in TextInput OnChanged [" .. textinput.Name .. "]: " .. tostring(err))
+						end
 					end
 
 				end)
@@ -5678,23 +6419,22 @@ function syde:Init(library)
 				end)
 
 				local function ProcessInput(text)
-					local success, errorMsg = pcall(function()
+					data.Text = tostring(text or "")
+					if typeof(data.CallBack) ~= "function" then
+						return
+					end
+					local ok, err = pcall(function()
 						data.CallBack(text)
 					end)
-					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+					if not ok then
+						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(err))
 					end
 				end
 
 				textBox.FocusLost:Connect(function(enterPressed)
 					if not enterPressed then return end
 
-					local success, errorMsg = pcall(function()
-						data.CallBack(textBox.Text)
-					end)
-					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
-					end
+					ProcessInput(textBox.Text)
 
 					if data.ClearOnLost then
 						task.defer(function()
@@ -5707,12 +6447,7 @@ function syde:Init(library)
 				end)
 
 				textinput.TextFrame.Enter.MouseButton1Click:Connect(function()
-					local success, errorMsg = pcall(function()
-						data.CallBack(textBox.Text)
-					end)
-					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
-					end
+					ProcessInput(textBox.Text)
 
 					if data.ClearOnLost then
 						task.defer(function()
@@ -5723,6 +6458,20 @@ function syde:Init(library)
 						textBox.ClearTextOnFocus = false
 					end
 				end)
+
+				function data:Set(newValue, skipCallback)
+					local incoming = tostring(newValue or "")
+					data.Text = incoming
+					textBox.Text = incoming
+					textBox.ClearTextOnFocus = false
+					if not skipCallback then
+						ProcessInput(incoming)
+					end
+				end
+
+				if data.SFlag then
+					syde.SettingsFlags[data.SFlag] = data
+				end
 
 
 			end
@@ -5747,6 +6496,19 @@ function syde:Init(library)
 			CallBack = function()
 				ToggleUI()
 			end,
+		})
+
+		a:Toggle({
+			Title = '24-Hour Clock',
+			Description = 'Show mini clock as 00:00 instead of 12-hour format.',
+			Value = use24HourClock,
+			CallBack = function(v)
+				use24HourClock = v
+				if mh and Minihome and Minihome:FindFirstChild("info") and Minihome.info:FindFirstChild("time") then
+					Minihome.info.time.Text = getMinihomeTimeText()
+				end
+			end,
+			SFlag = 'TIME24',
 		})
 
 		a:ColorPicker({
@@ -5808,34 +6570,49 @@ function syde:Init(library)
 		})]]
 
 		local rotateGradient = false
-		local rotating = false
+		local gradientRotationConnection = nil
+		local gradientRotationSpeed = 12
+		if window.shadow and window.shadow.ImageLabel and window.shadow.ImageLabel:FindFirstChild("UIGradient") then
+			window.shadow.ImageLabel.UIGradient.Rotation = 0
+		end
 
 		local function startGradientRotation()
-			if rotating then return end
-			rotating = true
-
-			task.spawn(function()
-				local grad = window.shadow.ImageLabel.UIGradient
-				local rotation = 0
-				while rotateGradient and grad and grad.Enabled do
-					rotation = (rotation + 1) % 360
-					grad.Rotation = rotation
-					task.wait() -- adjust speed if you want
+			if gradientRotationConnection then return end
+			local grad = window.shadow and window.shadow.ImageLabel and window.shadow.ImageLabel:FindFirstChild("UIGradient")
+			if not grad then
+				return
+			end
+			gradientRotationConnection = runservice.RenderStepped:Connect(function(dt)
+				if not rotateGradient or not grad or not grad.Parent or not grad.Enabled then
+					if gradientRotationConnection then
+						gradientRotationConnection:Disconnect()
+						gradientRotationConnection = nil
+					end
+					return
 				end
-				rotating = false
+				grad.Rotation = (grad.Rotation + (gradientRotationSpeed * dt)) % 360
 			end)
 		end
 
 		a:Toggle({
 			Title = 'Rotate Gradient',
-			Description = 'Slowly rotates the gradient if enabled.',
+			Description = 'Slowly rotates the gradient if enabled',
 			Value = false,
 			CallBack = function(v)
 				rotateGradient = v
-				local grad = window.shadow.ImageLabel.UIGradient
+				local grad = window.shadow and window.shadow.ImageLabel and window.shadow.ImageLabel:FindFirstChild("UIGradient")
 
 				if rotateGradient and grad and grad.Enabled then
 					startGradientRotation()
+				else
+					if gradientRotationConnection then
+						gradientRotationConnection:Disconnect()
+						gradientRotationConnection = nil
+					end
+				end
+
+				if not rotateGradient and grad then
+					grad.Rotation = 0
 				end
 			end,
 			SFlag = 'RG',
@@ -5843,7 +6620,7 @@ function syde:Init(library)
 
 		a:Toggle({
 			Title = 'Glow',
-			Description = 'Shine on the ui.',
+			Description = 'Shine on the UI',
 			CallBack = function (v)
 				if v then
 					glow = true
@@ -5854,7 +6631,7 @@ function syde:Init(library)
 					end
 					window.pages.v0.Visible = false
 
-					window.pages.clipframe.v1.Visible = false
+					window.pages.clipframe.v0.Visible = false
 					window.pages.clipframe.v1.Visible = false
 
 					--		window.shadow.ImageLabel.Visible = false
@@ -5877,7 +6654,7 @@ function syde:Init(library)
 						window.pages.v0.Visible = false
 					else
 						window.pages.v0.Visible = true
-						window.pages.clipframe.v1.Visible = true
+						window.pages.clipframe.v0.Visible = true
 						window.pages.clipframe.v1.Visible = true
 					end
 				end
@@ -5887,7 +6664,7 @@ function syde:Init(library)
 
 		a:Toggle({
 			Title = 'Blur',
-			Description = 'Make sure your graphics are above 8.',
+			Description = 'Make sure your graphics are above 8',
 			CallBack = function (v)
 				if v then
 					window.shadow.ImageLabel.Visible = false
@@ -5904,6 +6681,11 @@ function syde:Init(library)
 						BrickColor = BrickColor.new('Institutional white');
 					})
 
+					if activeBlurDof and activeBlurDof.Parent then
+						activeBlurDof:Destroy()
+						activeBlurDof = nil
+					end
+
 					local dof = Instance.new('DepthOfFieldEffect')
 					dof.Parent = game.Lighting
 					dof.Enabled = true
@@ -5911,8 +6693,13 @@ function syde:Init(library)
 					dof.InFocusRadius = 50
 					dof.NearIntensity = 1
 					dof.FarIntensity = 0
+					activeBlurDof = dof
 
 					bluron = true
+					applyTopFunctionBackgrounds(false)
+					applySettingsFunctionBackground(false)
+					applyMinihomeInfoTransparency()
+					applyBasicButtonTransparency()
 
 				else
 					window.shadow.ImageLabel.Visible = true
@@ -5925,13 +6712,20 @@ function syde:Init(library)
 					window.pages.clipframe.v0.Visible = true
 
 					syde:UnbindFrame(window)
+					if activeBlurDof then
+						activeBlurDof:Destroy()
+						activeBlurDof = nil
+					end
 
 					bluron = false
+					applyTopFunctionBackgrounds(false)
+					applySettingsFunctionBackground(false)
+					applyMinihomeInfoTransparency()
+					applyBasicButtonTransparency()
 				end
 			end,
 			SFlag = 'BLUR',
 		})
-
 
 		a:Slider({
 			Title = 'Modifiers',
@@ -5965,7 +6759,7 @@ function syde:Init(library)
 		a:Toggle({
 			Title = 'Wallpaper';
 			Description = 'Displays personalized wallpaper';
-			Value = LockToScreen,
+			Value = window.wallpaper.ison.Value,
 			CallBack = function (v)
 				if v then
 					window.wallpaper.Visible = true
@@ -5998,16 +6792,30 @@ function syde:Init(library)
 		})
 
 		a:TextInput({
-			Title = 'Wallpaper ID';
-			NumberOnly = true;
-			PlaceHolder = 'Input your wallpaper ID here.';
+			Title = 'Wallpaper Source';
+			NumberOnly = false;
+			PlaceHolder = 'Use Roblox ID or image URL (https://...)';
 			CallBack = function (v)
-				if v then
-					window.wallpaper.Image = 'rbxassetid://'..v
+				local source, err = resolveWallpaperSource(v)
+				if not source then
 					syde:Toast({
-						Content = 'Wallpaper applied.'
+						Content = err or 'Wallpaper source is invalid.';
+						Duration = 4;
 					})
+					return
 				end
+
+				local ok = pcall(function()
+					window.wallpaper.Image = source
+					if window.wallpaper.ison.Value then
+						window.wallpaper.Visible = true
+					end
+				end)
+
+				syde:Toast({
+					Content = ok and 'Wallpaper source updated.' or 'Wallpaper could not be applied.';
+					Duration = ok and 3 or 4;
+				})
 			end
 		})
 
@@ -6064,9 +6872,14 @@ function syde:Init(library)
 		end
 
 		--// BUTTON: Open OAuth
+		b:Paragraph({
+			Title = "Discord Linking",
+			Content = "1) Click Connect Discord. 2) Finish login in your browser. 3) Paste your numeric Discord ID below and press Enter. Green status means verified."
+		})
+
 		b:Button({
 			Title = "Connect Discord",
-			Description = "Authenticate your Discord account.",
+			Description = "Open browser login to link your Discord account.",
 			CallBack = function()
 				openURL(loginUrl)
 			end,
@@ -6117,7 +6930,7 @@ function syde:Init(library)
 		--// INPUT: Discord ID verification
 		b:TextInput({
 			Title = "Discord ID",
-			PlaceHolder = "Paste your Discord ID after verifying",
+			PlaceHolder = "Paste your numeric Discord ID, then press Enter",
 			ClearOnLost = false,
 			CallBack = function(v)
 				currentDiscordId = v
@@ -6161,95 +6974,634 @@ function syde:Init(library)
 		})
 
 
-		function syde:SaveSettingsConfig()
-			local Data = {}
+		local SETTINGS_CONFIG_SCHEMA = "syde.settings.v2"
 
+		function syde:GetSettingsAutoloadPath()
+			return string.format("%s/SettingsAutoload.json", syde.ConfigFolder)
+		end
 
-			for flag, v in pairs(syde.SettingsFlags or {}) do
+		function syde:NormalizeSettingsConfigName(name)
+			local cleaned = tostring(name or ""):gsub("^%s*(.-)%s*$", "%1")
+			cleaned = cleaned:gsub("[\\/:*?\"<>|]", "_")
+			cleaned = cleaned:gsub("%s+", " ")
+			if cleaned == "" then
+				cleaned = "Default"
+			end
+			return cleaned
+		end
 
-				if v.Type == "ColorPicker" and v.Color then
-					Data[flag] = syde:ColorPack(v.Color)
-				elseif v.V ~= nil then
-					Data[flag] = v.V
-				elseif v.StarterValue ~= nil then
-					Data[flag] = v.StarterValue
-				else
-					warn("[DEBUG] Skipping flag", flag, "no valid value found")
+		function syde:GetSettingsConfigFolderPath()
+			return string.format("%s/SettingsConfigs", syde.ConfigFolder)
+		end
+
+		function syde:GetPrimarySettingsConfigPath(name)
+			local cleaned = syde:NormalizeSettingsConfigName(name)
+			return string.format("%s/%s.json", syde:GetSettingsConfigFolderPath(), cleaned), cleaned
+		end
+
+		function syde:GetFallbackSettingsConfigPath(name)
+			local cleaned = syde:NormalizeSettingsConfigName(name)
+			return string.format("%s/%s.json", syde.ConfigFolder, cleaned), cleaned
+		end
+
+		function syde:GetLegacySettingsConfigPath()
+			return string.format("%s/SettingsConfig.lua", syde.ConfigFolder)
+		end
+
+		function syde:EnsureSettingsConfigFolders()
+			if type(makefolder) ~= "function" then
+				return
+			end
+			pcall(function()
+				makefolder(syde.ConfigFolder)
+			end)
+			pcall(function()
+				makefolder(syde:GetSettingsConfigFolderPath())
+			end)
+		end
+
+		function syde:ReadTextFile(path)
+			if type(isfile) ~= "function" or type(readfile) ~= "function" then
+				return nil
+			end
+			if not isfile(path) then
+				return nil
+			end
+			local ok, content = pcall(function()
+				return readfile(path)
+			end)
+			if ok then
+				return content
+			end
+			return nil
+		end
+
+		function syde:WriteTextFile(path, content)
+			if type(writefile) ~= "function" then
+				return false
+			end
+			local ok = pcall(function()
+				writefile(path, content)
+			end)
+			return ok == true
+		end
+
+		function syde:GetSettingsConfigCandidates(name)
+			local primaryPath, cleaned = syde:GetPrimarySettingsConfigPath(name)
+			local fallbackPath = syde:GetFallbackSettingsConfigPath(cleaned)
+			local candidates = {
+				primaryPath,
+				fallbackPath
+			}
+			if cleaned == "Default" then
+				table.insert(candidates, syde:GetLegacySettingsConfigPath())
+			end
+			return candidates, cleaned
+		end
+
+		function syde:ListSettingsConfigs()
+			local seen = { Default = true }
+			local configFolder = syde:GetSettingsConfigFolderPath()
+			local ignoredRootNames = {
+				["settingsautoload"] = true,
+				["last_game"] = true,
+				[tostring(syde.ConfigFile or ""):lower()] = true
+			}
+
+			local function addFromPath(path, fromRoot)
+				local normalized = tostring(path):gsub("\\", "/")
+				local fileName = normalized:match("([^/]+)$")
+				local name = fileName and fileName:match("^(.-)%.json$")
+				if name and name ~= "" then
+					local lowered = name:lower()
+					if not fromRoot or not ignoredRootNames[lowered] then
+						seen[name] = true
+					end
 				end
 			end
 
+			if type(listfiles) == "function" and type(isfolder) == "function" and isfolder(configFolder) then
+				local ok, files = pcall(function()
+					return listfiles(configFolder)
+				end)
+				if ok and type(files) == "table" then
+					for _, path in ipairs(files) do
+						addFromPath(path, false)
+					end
+				end
+			end
 
-			local path = string.format("%s/SettingsConfig.lua", syde.ConfigFolder)
-			local encoded = https:JSONEncode(Data)
+			if type(listfiles) == "function" and type(isfolder) == "function" and isfolder(syde.ConfigFolder) then
+				local ok, files = pcall(function()
+					return listfiles(syde.ConfigFolder)
+				end)
+				if ok and type(files) == "table" then
+					for _, path in ipairs(files) do
+						addFromPath(path, true)
+					end
+				end
+			end
 
-			writefile(path, encoded)
+			if type(isfile) == "function" and isfile(syde:GetLegacySettingsConfigPath()) then
+				seen.Default = true
+			end
 
-			syde:Toast({
-				Content = 'Saved setting config';
-				Duration = 3
-			})
+			local list = {}
+			for name in pairs(seen) do
+				table.insert(list, name)
+			end
+			table.sort(list, function(a, b)
+				return a:lower() < b:lower()
+			end)
+			return list
 		end
 
-		function syde:LoadSettingsConfig()
-			local path = string.format("%s/SettingsConfig.lua", syde.ConfigFolder)
+		function syde:GetSettingsAutoloadData()
+			local defaults = {
+				Enabled = false,
+				LastConfig = "Default"
+			}
+			local content = syde:ReadTextFile(syde:GetSettingsAutoloadPath())
+			if not content then
+				return defaults
+			end
+			local ok, decoded = pcall(function()
+				return https:JSONDecode(content)
+			end)
+			if not ok or typeof(decoded) ~= "table" then
+				return defaults
+			end
+			return {
+				Enabled = decoded.Enabled == true,
+				LastConfig = syde:NormalizeSettingsConfigName(decoded.LastConfig or "Default")
+			}
+		end
 
-			if not isfile(path) then
+		function syde:GetSettingsAutoload()
+			return syde:GetSettingsAutoloadData().Enabled
+		end
 
+		function syde:GetLastUsedSettingsConfig()
+			return syde:GetSettingsAutoloadData().LastConfig
+		end
+
+		function syde:SetSettingsAutoload(enabled, lastConfig)
+			if type(writefile) ~= "function" then
+				return false
+			end
+			syde:EnsureSettingsConfigFolders()
+			local payload = {
+				Schema = SETTINGS_CONFIG_SCHEMA,
+				Enabled = enabled == true,
+				LastConfig = syde:NormalizeSettingsConfigName(lastConfig or "Default")
+			}
+			return syde:WriteTextFile(syde:GetSettingsAutoloadPath(), https:JSONEncode(payload))
+		end
+
+		function syde:SetLastUsedSettingsConfig(name)
+			local data = syde:GetSettingsAutoloadData()
+			return syde:SetSettingsAutoload(data.Enabled, name)
+		end
+
+		function syde:CaptureSettingsConfigPayload()
+			local values = {}
+			for flag, setting in pairs(syde.SettingsFlags or {}) do
+				if type(flag) == "string" and flag ~= "" then
+					if setting.Type == "ColorPicker" and setting.Color then
+						values[flag] = {
+							Kind = "Color",
+							Value = syde:ColorPack(setting.Color)
+						}
+					elseif setting.Type == "TextInput" then
+						values[flag] = {
+							Kind = "Text",
+							Value = tostring(setting.Text or "")
+						}
+					elseif setting.StarterValue ~= nil then
+						values[flag] = {
+							Kind = "Slider",
+							Value = setting.StarterValue
+						}
+					elseif setting.V ~= nil then
+						values[flag] = {
+							Kind = "Toggle",
+							Value = setting.V
+						}
+					end
+				end
+			end
+
+			return {
+				Schema = SETTINGS_CONFIG_SCHEMA,
+				Build = syde.Build,
+				SavedAt = os.time(),
+				Values = values
+			}
+		end
+
+		function syde:DecodeSettingsConfigPayload(rawData)
+			if typeof(rawData) ~= "table" then
+				return nil
+			end
+
+			if typeof(rawData.Values) == "table" then
+				return rawData.Values
+			end
+
+			local converted = {}
+			for flag, value in pairs(rawData) do
+				if type(flag) == "string" and flag:sub(1, 1) ~= "_" then
+					if typeof(value) == "table" and value.Kind ~= nil and value.Value ~= nil then
+						converted[flag] = value
+					elseif typeof(value) == "table" and value.R ~= nil and value.G ~= nil and value.B ~= nil then
+						converted[flag] = { Kind = "Color", Value = value }
+					elseif type(value) == "number" then
+						converted[flag] = { Kind = "Slider", Value = value }
+					elseif type(value) == "string" then
+						converted[flag] = { Kind = "Text", Value = value }
+					else
+						converted[flag] = { Kind = "Toggle", Value = value }
+					end
+				end
+			end
+			return converted
+		end
+
+		function syde:ApplySettingsConfigValue(flag, packedValue)
+			local setting = syde.SettingsFlags and syde.SettingsFlags[flag]
+			if not setting then
+				return false
+			end
+
+			local value = packedValue
+			local kind = nil
+			if typeof(packedValue) == "table" and packedValue.Kind ~= nil and packedValue.Value ~= nil then
+				kind = packedValue.Kind
+				value = packedValue.Value
+			end
+
+			if setting.Type == "ColorPicker" or kind == "Color" then
+				local colorValue = value
+				if typeof(colorValue) == "table" then
+					colorValue = syde:ColorUnpack(colorValue)
+				end
+				if typeof(colorValue) ~= "Color3" then
+					return false
+				end
+				if setting.Set then
+					local ok = pcall(function()
+						setting:Set(colorValue, true)
+					end)
+					return ok
+				end
+				setting.Color = colorValue
+				if setting.CallBack then
+					pcall(function()
+						setting.CallBack(colorValue)
+					end)
+				end
+				return true
+			end
+
+			if setting.StarterValue ~= nil or kind == "Slider" then
+				local numeric = tonumber(value)
+				if not numeric then
+					return false
+				end
+				if setting.Set then
+					local ok = pcall(function()
+						setting:Set(numeric, true)
+					end)
+					return ok
+				end
+				setting.StarterValue = numeric
+				if setting.CallBack then
+					pcall(function()
+						setting.CallBack(numeric)
+					end)
+				end
+				return true
+			end
+
+			if setting.Type == "TextInput" or kind == "Text" then
+				local textValue = tostring(value or "")
+				if setting.Set then
+					local ok = pcall(function()
+						setting:Set(textValue, false)
+					end)
+					return ok
+				end
+				setting.Text = textValue
+				if setting.CallBack then
+					pcall(function()
+						setting.CallBack(textValue)
+					end)
+				end
+				return true
+			end
+
+			if setting.V ~= nil or kind == "Toggle" then
+				local boolValue = (value == true or value == 1 or tostring(value):lower() == "true")
+				if setting.Set then
+					local ok = pcall(function()
+						setting:Set(boolValue, true)
+					end)
+					return ok
+				end
+				setting.V = boolValue
+				if setting.CallBack then
+					pcall(function()
+						setting.CallBack(boolValue)
+					end)
+				end
+				return true
+			end
+
+			if setting.Set then
+				local ok = pcall(function()
+					setting:Set(value, true)
+				end)
+				return ok
+			end
+
+			return false
+		end
+
+		function syde:SaveSettingsConfig(configName)
+			if type(writefile) ~= "function" then
 				syde:Toast({
-					Content = 'No settings found';
+					Content = "Save not supported in this environment";
 					Duration = 3
 				})
-				return
+				return false
 			end
 
-			local success, data = pcall(function()
-				return https:JSONDecode(readfile(path))
-			end)
+			syde:EnsureSettingsConfigFolders()
+			local primaryPath, cleanedName = syde:GetPrimarySettingsConfigPath(configName)
+			local fallbackPath = syde:GetFallbackSettingsConfigPath(cleanedName)
+			local payload = syde:CaptureSettingsConfigPayload()
+			local encoded = https:JSONEncode(payload)
 
-			if not success or typeof(data) ~= "table" then
-				warn("[DEBUG] Failed to decode settings:", data)
-				return
+			local savedPath = nil
+			if syde:WriteTextFile(primaryPath, encoded) then
+				savedPath = primaryPath
+			elseif syde:WriteTextFile(fallbackPath, encoded) then
+				savedPath = fallbackPath
 			end
 
-			for flag, val in pairs(data) do
-				local setting = syde.SettingsFlags and syde.SettingsFlags[flag]
-				if setting then
-					if setting.Set then
-						setting:Set(val)
-					elseif setting.Type == "ColorPicker" and setting.Color then
-						setting.Color = syde:ColorUnpack(val)
-					elseif setting.V ~= nil then
-						setting.Value = val
-					end
-				else
-					warn("[DEBUG] No matching setting flag found for:", flag)
+			if not savedPath then
+				syde:Toast({
+					Content = "Failed to save config: " .. cleanedName;
+					Duration = 4
+				})
+				return false
+			end
+
+			if cleanedName == "Default" then
+				syde:WriteTextFile(syde:GetLegacySettingsConfigPath(), encoded)
+			end
+
+			syde:SetLastUsedSettingsConfig(cleanedName)
+			syde:Toast({
+				Content = "Saved config: " .. cleanedName;
+				Duration = 3
+			})
+			return true, cleanedName
+		end
+
+		function syde:LoadSettingsConfig(configName, options)
+			options = (type(options) == "table" and options) or {}
+			local silent = options.Silent == true
+			local candidates, cleanedName = syde:GetSettingsConfigCandidates(configName)
+			local content = nil
+			local usedPath = nil
+
+			for _, path in ipairs(candidates) do
+				content = syde:ReadTextFile(path)
+				if content then
+					usedPath = path
+					break
 				end
 			end
 
-			syde:Toast({
-				Content = 'Loaded setting config';
-				Duration = 3
+			if not content then
+				if not silent then
+					syde:Toast({
+						Content = "No config found: " .. cleanedName;
+						Duration = 3
+					})
+				end
+				return false
+			end
+
+			local ok, decoded = pcall(function()
+				return https:JSONDecode(content)
+			end)
+			if not ok or typeof(decoded) ~= "table" then
+				if not silent then
+					syde:Toast({
+						Content = "Config is invalid: " .. cleanedName;
+						Duration = 4
+					})
+				end
+				return false
+			end
+
+			local values = syde:DecodeSettingsConfigPayload(decoded)
+			if typeof(values) ~= "table" then
+				if not silent then
+					syde:Toast({
+						Content = "Config has no values: " .. cleanedName;
+						Duration = 4
+					})
+				end
+				return false
+			end
+
+			local appliedCount = 0
+			for flag, packed in pairs(values) do
+				local applied = syde:ApplySettingsConfigValue(flag, packed)
+				if applied then
+					appliedCount += 1
+				end
+			end
+
+			if appliedCount == 0 then
+				if not silent then
+					syde:Toast({
+						Content = "Config loaded but no matching settings: " .. cleanedName;
+						Duration = 4
+					})
+				end
+				return false
+			end
+
+			syde:SetLastUsedSettingsConfig(cleanedName)
+			if not silent then
+				syde:Toast({
+					Content = string.format("Loaded config: %s (%d)", cleanedName, appliedCount);
+					Duration = 3
+				})
+			end
+			return true, cleanedName, usedPath
+		end
+
+		function syde:AutoLoadSettingsConfig(configName)
+			local desired = syde:NormalizeSettingsConfigName(configName or syde:GetLastUsedSettingsConfig())
+			task.spawn(function()
+				local attempts = 12
+				for _ = 1, attempts do
+					if next(syde.SettingsFlags or {}) then
+						local ok = syde:LoadSettingsConfig(desired, { Silent = true })
+						if ok then
+							syde:Toast({
+								Content = "Autoloaded config: " .. desired;
+								Duration = 2
+							})
+							return
+						end
+					end
+					task.wait(0.2)
+				end
+
+				-- Final visible attempt to expose useful error if something is wrong.
+				syde:LoadSettingsConfig(desired, { Silent = false })
+			end)
+		end
+
+		local autoLoadData = syde:GetSettingsAutoloadData()
+		local selectedSettingsConfigName = syde:NormalizeSettingsConfigName(autoLoadData.LastConfig)
+		local configDropdownTitle = "Saved Configs"
+
+		local function getActiveSettingsConfigName()
+			return syde:NormalizeSettingsConfigName(selectedSettingsConfigName)
+		end
+
+		local function setActiveSettingsConfigName(rawValue)
+			local text = tostring(rawValue or ""):gsub("^%s*(.-)%s*$", "%1")
+			if text ~= "" then
+				selectedSettingsConfigName = syde:NormalizeSettingsConfigName(text)
+			end
+		end
+
+		local function rebuildSettingsConfigDropdown()
+			local themePage = window.settings and window.settings.pages and window.settings.pages:FindFirstChild("Theme")
+			if themePage then
+				local existing = themePage:FindFirstChild(configDropdownTitle)
+				if existing and existing:IsA("Frame") then
+					existing:Destroy()
+				end
+			end
+
+			local configs = syde:ListSettingsConfigs()
+			if #configs <= 2 then
+				return
+			end
+
+			local starter = table.find(configs, selectedSettingsConfigName) and selectedSettingsConfigName or configs[1]
+			selectedSettingsConfigName = starter
+
+			a:Dropdown({
+				Title = configDropdownTitle,
+				Options = configs,
+				StarterOption = starter,
+				PlaceHolder = "Select saved config...",
+				Multi = false,
+				CallBack = function(choice)
+					if typeof(choice) == "string" and choice ~= "" then
+						selectedSettingsConfigName = syde:NormalizeSettingsConfigName(choice)
+					end
+				end
 			})
 		end
 
-		a:Button({
-			Title = 'Save',
-			Description = 'Save all setting configurations.',
-			CallBack = function ()
-				syde:SaveSettingsConfig()
+		a:TextInput({
+			Title = "Config Name",
+			PlaceHolder = "Name your config (e.g. Alps)",
+			ClearOnLost = false,
+			OnChanged = function(v)
+				setActiveSettingsConfigName(v)
+			end,
+			CallBack = function(v)
+				setActiveSettingsConfigName(v)
 			end
 		})
+
 		a:Button({
-			Title = 'Load',
-			Description = 'Load all setting configurations.',
-			CallBack = function ()
-				syde:LoadSettingsConfig()
+			Title = "Save",
+			Description = "Save all setting configurations.",
+			CallBack = function()
+				local ok, usedName = syde:SaveSettingsConfig(getActiveSettingsConfigName())
+				if ok and usedName then
+					selectedSettingsConfigName = usedName
+					rebuildSettingsConfigDropdown()
+				end
 			end
 		})
+
+		a:Button({
+			Title = "Load",
+			Description = "Load all setting configurations.",
+			CallBack = function()
+				local ok, usedName = syde:LoadSettingsConfig(getActiveSettingsConfigName())
+				if ok and usedName then
+					selectedSettingsConfigName = usedName
+				end
+			end
+		})
+
+		a:Button({
+			Title = "Refresh Config List",
+			Description = "Rebuild the config dropdown list.",
+			CallBack = function()
+				rebuildSettingsConfigDropdown()
+			end
+		})
+
+		rebuildSettingsConfigDropdown()
+
+		local autoLoadSettings = autoLoadData.Enabled
+		a:Toggle({
+			Title = "Autoload Settings",
+			Description = "Automatically load the last used named config on startup.",
+			Value = autoLoadSettings,
+			CallBack = function(v)
+				local saved = syde:SetSettingsAutoload(v, getActiveSettingsConfigName())
+				if not saved then
+					syde:Toast({
+						Content = "Autoload file not supported in this environment";
+						Duration = 3
+					})
+					return
+				end
+				if v then
+					syde:AutoLoadSettingsConfig(getActiveSettingsConfigName())
+				end
+			end,
+			SFlag = "AUTOSET",
+		})
+
+		a:Toggle({
+			Title = 'UI Animations',
+			Description = 'Enable or disable most UI transition animations.',
+			Value = uiAnimationsEnabled,
+			CallBack = function(v)
+				uiAnimationsEnabled = v
+				syde.UIAnimationsEnabled = v
+				applyAnimationMode()
+				applyTopFunctionBackgrounds(false)
+				applySettingsFunctionBackground(false)
+			end,
+			SFlag = 'UIANIM',
+		})
+
+		if autoLoadSettings then
+			syde:AutoLoadSettingsConfig(selectedSettingsConfigName)
+		end
 
 		b:Toggle({
 			Title = 'Anonymous',
-			Description = 'Hides your info in User Info.',
+			Description = 'Hide username, display name and avatar in User Info.',
 			CallBack = function (v)
 				if v then
 					window.user.headshot.id.username.Text = '?'
@@ -6264,7 +7616,7 @@ function syde:Init(library)
 
 		c:Paragraph({
 			Title = 'Status',
-			Content = 'Your Up To Date!'
+			Content = "You're up to date."
 		})
 
 
@@ -6398,6 +7750,13 @@ function syde:Init(library)
 
 
 		local function ChangeName(Name)
+			if not uiAnimationsEnabled then
+				pages.clipframe.title.Text = Name
+				pages.clipframe.title.TextTransparency = 0
+				pages.clipframe.title.Position = UDim2.new(0, 5,0.5, 0)
+				return
+			end
+
 			tweenservice:Create(pages.clipframe.title, TweenInfo.new(0), { TextTransparency = pages.clipframe.title.TextTransparency }):Play()
 			tweenservice:Create(pages.clipframe.title, TweenInfo.new(0), { Position = pages.clipframe.title.Position }):Play()
 
@@ -6456,12 +7815,12 @@ function syde:Init(library)
 
 			if isActive then
 				--	tweenservice:Create(HomeButton.text, TweenInfo.new(1, Enum.EasingStyle.Exponential), { TextTransparency = 0 }):Play()
-				tweenservice:Create(HomeButton.homeicon, TweenInfo.new(1, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.45 }):Play()
-				tweenservice:Create(HomeButton.homeicon.ImageLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), { ImageTransparency = 0 }):Play()
+				tweenOrSet(HomeButton.homeicon, TweenInfo.new(1, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.45 })
+				tweenOrSet(HomeButton.homeicon.ImageLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
 			else
 				--	tweenservice:Create(HomeButton.text, TweenInfo.new(1, Enum.EasingStyle.Exponential), { TextTransparency = 0.67 }):Play()
-				tweenservice:Create(HomeButton.homeicon, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.85 }):Play()
-				tweenservice:Create(HomeButton.homeicon.ImageLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), { ImageTransparency = 0.67 }):Play()
+				tweenOrSet(HomeButton.homeicon, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0.85 })
+				tweenOrSet(HomeButton.homeicon.ImageLabel, TweenInfo.new(1, Enum.EasingStyle.Exponential), { ImageTransparency = 0.67 })
 			end
 		end
 
@@ -6479,9 +7838,11 @@ function syde:Init(library)
 				task.spawn(function()
 					for _, v in ipairs(tabs:GetChildren()) do
 						if v:IsA("Frame") then
-							tweenservice:Create(v, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = UDim2.new(0, v.title.TextBounds.X + 100,0, 30) }):Play()
-							task.wait(0.15)
-							tweenservice:Create(tabButton, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = targetSize }):Play()
+							tweenOrSet(v, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = UDim2.new(0, v.title.TextBounds.X + 100,0, 30) })
+							if uiAnimationsEnabled then
+								task.wait(0.15)
+							end
+							tweenOrSet(tabButton, TweenInfo.new(0.75, Enum.EasingStyle.Quart), { Size = targetSize })
 							isInit = false
 						end
 					end
@@ -6489,6 +7850,16 @@ function syde:Init(library)
 
 			end
 
+			if not uiAnimationsEnabled then
+				tabButton.Size = targetSize
+				tabButton.BackgroundTransparency = targetBackgroundTransparency
+				tabButton.title.TextTransparency = targetTextTransparency
+				tabButton.indicator.glow.ImageColor3 = targetColor
+				tabButton.indicator.glow.ImageTransparency = isSelected and 0.78 or 1
+				tabButton.indicator.BackgroundColor3 = targetColor
+				tabButton.indicator.BackgroundTransparency = isSelected and 0 or 1
+				return
+			end
 
 			tweenservice:Create(tabButton, positionTweenInfo, { Size = targetSize }):Play()
 			tweenservice:Create(tabButton, colorTweenInfo, { BackgroundTransparency = targetBackgroundTransparency, }):Play()
@@ -6762,29 +8133,38 @@ function syde:Init(library)
 				-- Optional: switch tab visuals (if SwitchToTab does this)
 				SwitchToTab(page.Name)
 
-				task.wait(0.05) -- small delay to allow UI to update
+				if uiAnimationsEnabled then
+					task.wait(0.05) -- small delay to allow UI to update
+				end
 
 				-- Calculate scroll position
 				local y = func.AbsolutePosition.Y - openedPage.AbsolutePosition.Y + openedPage.CanvasPosition.Y
 
 				-- Scroll to the function
-				tweenservice:Create(
-					openedPage,
-					TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
-					{ CanvasPosition = Vector2.new(0, math.max(0, y - 20)) }
-				):Play()
+				local targetCanvas = Vector2.new(0, math.max(0, y - 20))
+				if uiAnimationsEnabled then
+					tweenservice:Create(
+						openedPage,
+						TweenInfo.new(0.6, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out),
+						{ CanvasPosition = targetCanvas }
+					):Play()
+				else
+					openedPage.CanvasPosition = targetCanvas
+				end
 
 				-- Highlight flash
-				local original = func.BackgroundColor3
-				tweenservice:Create(func, TweenInfo.new(0.2), {
-					BackgroundColor3 = syde:GetLighter(original, 0.03)
-				}):Play()
-
-				task.delay(0.35, function()
-					tweenservice:Create(func, TweenInfo.new(0.35), {
-						BackgroundColor3 = original
+				if uiAnimationsEnabled then
+					local original = func.BackgroundColor3
+					tweenservice:Create(func, TweenInfo.new(0.2), {
+						BackgroundColor3 = syde:GetLighter(original, 0.03)
 					}):Play()
-				end)
+
+					task.delay(0.35, function()
+						tweenservice:Create(func, TweenInfo.new(0.35), {
+							BackgroundColor3 = original
+						}):Play()
+					end)
+				end
 			end)
 
 			result.MouseEnter:Connect(function()
@@ -6895,6 +8275,7 @@ function syde:Init(library)
 			button.Name = data.Title
 			button.title.Size = UDim2.new(0, button.title.TextBounds.X + 15,0, 35)
 			button:SetAttribute("Searchable", true)
+			button.BackgroundTransparency = getBasicButtonTransparency()
 
 			local c
 
@@ -6908,14 +8289,13 @@ function syde:Init(library)
 				-- UI Stroke effect on button press
 
 				button.interact.MouseButton1Down:Connect(function()
-					tweenservice:Create(button.UIStroke, fOTween, { Transparency = 1 }):Play()
-					tweenservice:Create(button.ImageLabel, fOTween, { ImageTransparency = 1 }):Play()
-					tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
+					tweenOrSet(button.UIStroke, fOTween, { Transparency = 1 })
+					tweenOrSet(button.ImageLabel, fOTween, { ImageTransparency = 1 })
 				end)
 
 				button.interact.MouseButton1Up:Connect(function()
-					tweenservice:Create(button.UIStroke, fITween, { Transparency = 0 }):Play()
-					tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 }):Play()
+					tweenOrSet(button.UIStroke, fITween, { Transparency = 0 })
+					tweenOrSet(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 })
 
 
 				end)
@@ -6934,8 +8314,8 @@ function syde:Init(library)
 
 				-- Extra Check 
 				button.interact.MouseLeave:Connect(function()
-					tweenservice:Create(button.UIStroke, fITween, { Transparency = 0 }):Play()
-					tweenservice:Create(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 }):Play()
+					tweenOrSet(button.UIStroke, fITween, { Transparency = 0 })
+					tweenOrSet(button.ImageLabel, TweenInfo.new(0.8, Enum.EasingStyle.Exponential), { ImageTransparency = 0.95 })
 				end)
 			elseif data.Type == 'Hold' then
 				local HoldTime = data.HoldTime
@@ -7420,7 +8800,10 @@ function syde:Init(library)
 				}
 
 				Slider.Name = Options.Title
-				Slider.Title.Text = Options.Title
+				local sliderTitleLabel = getSliderTitleLabel(Slider)
+				if sliderTitleLabel and sliderTitleLabel:IsA("TextLabel") then
+					sliderTitleLabel.Text = Options.Title
+				end
 				Options.Value = Options.StarterValue
 
 				local dragging = false
@@ -7568,7 +8951,10 @@ function syde:Init(library)
 						-- Update the displayed value
 						Slider.v.Text = string.format("<font size='14'>%d</font><font color='#434343'>/%d</font>", newValue, Options.Range[2])
 
-						tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+						local titleLabel = getSliderTitleLabel(Slider)
+						if titleLabel and titleLabel:IsA("TextLabel") then
+							tweenservice:Create(titleLabel, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
+						end
 
 						local success, errorMsg = pcall(function()
 							Options.CallBack(newValue)
@@ -7596,7 +8982,10 @@ function syde:Init(library)
 				syde:AddConnection(userinput.InputEnded, function(input, processed)
 					if input.UserInputType == Enum.UserInputType.MouseButton1  or input.UserInputType == Enum.UserInputType.Touch then
 						dragging = false
-						tweenservice:Create(Slider.Title, TweenInfo.new( 0.5, Enum.EasingStyle.Exponential ), { TextTransparency = 0.6 }):Play()
+						local titleLabel = getSliderTitleLabel(Slider)
+						if titleLabel and titleLabel:IsA("TextLabel") then
+							tweenservice:Create(titleLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 0.6 }):Play()
+						end
 					end
 				end)
 
@@ -7647,9 +9036,12 @@ function syde:Init(library)
 					Slider.v.Text = string.format("<font size='14'>%d</font><font color='#434343'>/%d</font>", tostring(NewVal), Options.Range[2])
 
 					-- Tween title appearance
-					tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {
-						TextTransparency = 0
-					}):Play()
+					local titleLabel = getSliderTitleLabel(Slider)
+					if titleLabel and titleLabel:IsA("TextLabel") then
+						tweenservice:Create(titleLabel, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {
+							TextTransparency = 0
+						}):Play()
+					end
 
 					-- Callback
 					local success, result = pcall(function()
@@ -7706,6 +9098,76 @@ function syde:Init(library)
 				end
 			end
 
+		end
+
+		-- Compatibility aliases for older test/demo scripts
+		function initelement:CreateSlider(Slider)
+			return self:Slider(Slider)
+		end
+
+		function initelement:Img(ImgData)
+			local data = {
+				Title = ImgData and (ImgData.Title or "Image") or "Image";
+				Image = ImgData and (ImgData.Image or ImgData.Id) or "";
+				Height = ImgData and (ImgData.Height or 220) or 220;
+			}
+
+			local imageFrame = Instance.new("Frame")
+			imageFrame.Name = data.Title
+			imageFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+			imageFrame.BackgroundTransparency = getBasicButtonTransparency()
+			imageFrame.Size = UDim2.new(1, -35, 0, data.Height + 36)
+			imageFrame.Parent = Page
+			imageFrame:SetAttribute("Searchable", true)
+
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 20)
+			corner.Parent = imageFrame
+
+			local title = Instance.new("TextLabel")
+			title.Name = "title"
+			title.BackgroundTransparency = 1
+			title.Font = Enum.Font.GothamMedium
+			title.TextSize = 14
+			title.TextColor3 = Color3.fromRGB(230, 230, 230)
+			title.TextXAlignment = Enum.TextXAlignment.Left
+			title.Text = data.Title
+			title.Size = UDim2.new(1, -20, 0, 24)
+			title.Position = UDim2.new(0, 10, 0, 6)
+			title.Parent = imageFrame
+
+			local image = Instance.new("ImageLabel")
+			image.Name = "ImageLabel"
+			image.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+			image.BackgroundTransparency = 0.15
+			image.BorderSizePixel = 0
+			image.Image = normalizeImageSource(data.Image)
+			image.ScaleType = Enum.ScaleType.Fit
+			image.Size = UDim2.new(1, -20, 0, data.Height)
+			image.Position = UDim2.new(0, 10, 0, 30)
+			image.Parent = imageFrame
+
+			local imageCorner = Instance.new("UICorner")
+			imageCorner.CornerRadius = UDim.new(0, 14)
+			imageCorner.Parent = image
+
+			return imageFrame
+		end
+
+		function initelement:Image(ImageData)
+			return self:Img(ImageData)
+		end
+
+		function initelement:Rate(RateData)
+			local data = {
+				Title = (RateData and RateData.Title) or "Rating";
+				WebHook = (RateData and RateData.WebHook) or "";
+			}
+
+			return self:Paragraph({
+				Title = data.Title,
+				Content = "Rate component is not configured in this build.\nWebhook: " .. tostring(data.WebHook)
+			})
 		end
 
 		--@@KeyBind
@@ -8557,7 +10019,7 @@ function syde:Init(library)
 
 					if OptionText == data.StarterOption and not starterSet then
 						starterSet = true
-						dropdown.dropholder.drop.Selected.Text = OptionText
+						dropdown.dropholder.drop.selected.Text = OptionText
 						SelectedOptions = {[OptionText] = true}
 						SelectedOrder = {OptionText}
 
@@ -8922,11 +10384,14 @@ function syde:Init(library)
 
 				table.sort(Keys, function(a,b) return a.Time < b.Time end)
 
-				Keys[1] = ColorSequenceKeypoint.new(0, Keys[2].Value)
-				Keys[4] = ColorSequenceKeypoint.new(1, Keys[3].Value)
+				local leftInnerIndex = (#Keys >= 2) and 2 or 1
+				local rightInnerIndex = (#Keys >= 2) and (#Keys - 1) or #Keys
 
-				data.Color  = Keys[2].Value
-				data.Color2 = Keys[3].Value
+				Keys[1] = ColorSequenceKeypoint.new(0, Keys[leftInnerIndex].Value)
+				Keys[#Keys] = ColorSequenceKeypoint.new(1, Keys[rightInnerIndex].Value)
+
+				data.Color = Keys[leftInnerIndex].Value
+				data.Color2 = Keys[rightInnerIndex].Value
 
 				local seq = ColorSequence.new(Keys)
 				ExternalGradient.Color = seq
@@ -8958,24 +10423,6 @@ function syde:Init(library)
 
 				GradientFrame.Pin1.BackgroundColor3 = startCol
 				GradientFrame.Pin2.BackgroundColor3 = endCol
-			end
-
-			local oldCallback = data.CallBack
-			data.CallBack = function(col)
-				if data.Type ~= "Gradient" then
-					if oldCallback then oldCallback(col) end
-					return
-				end
-
-				table.sort(Keys, function(a,b) return a.Time < b.Time end)
-				Keys[1] = ColorSequenceKeypoint.new(0, Keys[1].Value)
-				Keys[#Keys] = ColorSequenceKeypoint.new(1, Keys[#Keys].Value)
-
-				local seq = ColorSequence.new(Keys)
-				ExternalGradient.Color = seq
-				GradientFrame.Gradient.Color = seq
-
-				if oldCallback then oldCallback(seq) end
 			end
 
 			if data.Type == "Gradient" then
@@ -9592,6 +11039,10 @@ function syde:Init(library)
 	return tbdata
 
 
+end
+
+if __sydeOverrideResult then
+	return __sydeOverrideResult
 end
 
 return syde
