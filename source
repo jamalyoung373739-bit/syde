@@ -1802,8 +1802,8 @@ end
 -- Internal Save Logic
 local function PerformSave()
 	if not syde.ConfigEnabled then return end
-	if not writefile then return end
-
+local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+if not writefile then return end
 	local Data = {
 		_version = CONFIG_VERSION
 	}
@@ -7073,15 +7073,16 @@ local function applyMinihomeInfoTransparency()
 			return nil
 		end
 
-		function syde:WriteTextFile(path, content)
-			if type(writefile) ~= "function" then
-				return false
-			end
-			local ok = pcall(function()
-				writefile(path, content)
-			end)
-			return ok == true
+        function syde:WriteTextFile(path, content)
+		local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+		if type(writefile) ~= "function" then
+			return false
 		end
+		local ok = pcall(function()
+			writefile(path, content)
+		end)
+		return ok == true
+	end
 
 		function syde:GetSettingsConfigCandidates(name)
 			local primaryPath, cleaned = syde:GetPrimarySettingsConfigPath(name)
@@ -7364,16 +7365,17 @@ local function applyMinihomeInfoTransparency()
 			return false
 		end
 
-		function syde:SaveSettingsConfig(configName)
-			if type(writefile) ~= "function" then
-				syde:Toast({
-					Content = "Save not supported in this environment";
-					Duration = 3
-				})
-				return false
-			end
+  function syde:SaveSettingsConfig(configName)
+		local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+		if type(writefile) ~= "function" then
+			syde:Toast({
+				Content = "Save not supported in this environment";
+				Duration = 3
+			})
+			return false
+		end
 
-			syde:EnsureSettingsConfigFolders()
+		syde:EnsureSettingsConfigFolders()
 			local primaryPath, cleanedName = syde:GetPrimarySettingsConfigPath(configName)
 			local fallbackPath = syde:GetFallbackSettingsConfigPath(cleanedName)
 			local payload = syde:CaptureSettingsConfigPayload()
