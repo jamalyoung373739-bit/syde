@@ -2,9 +2,8 @@ local getgenv = rawget(_G, 'getgenv')
 local loadstring = rawget(_G, 'loadstring')
 local load = rawget(_G, 'load')
 local readfile = rawget(_G, 'readfile')
-local writefile = rawget(_G, 'writefile')
-local isfile = rawget(_G, 'isfile')
-local isfolder = rawget(_G, 'isfolder')
+or _G.writefile
+local isfile = rawget(_G, 'isfile')local isfolder = rawget(_G, 'isfolder')
 local makefolder = rawget(_G, 'makefolder')
 local listfiles = rawget(_G, 'listfiles')
 local setclipboard = rawget(_G, 'setclipboard')
@@ -1802,7 +1801,7 @@ end
 -- Internal Save Logic
 local function PerformSave()
 	if not syde.ConfigEnabled then return end
-local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+local writefile = rawget(_G, 'writefile') or (type(getgenv) == "function" and getgenv().writefile) or _G.writefile
 if not writefile then return end
 	local Data = {
 		_version = CONFIG_VERSION
@@ -7074,7 +7073,7 @@ local function applyMinihomeInfoTransparency()
 		end
 
         function syde:WriteTextFile(path, content)
-		local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+	     local writefile = rawget(_G, 'writefile') or (type(getgenv) == "function" and getgenv().writefile) or _G.writefile
 		if type(writefile) ~= "function" then
 			return false
 		end
@@ -7366,7 +7365,7 @@ local function applyMinihomeInfoTransparency()
 		end
 
   function syde:SaveSettingsConfig(configName)
-		local writefile = writefile or rawget(_G, 'writefile') or (getgenv and rawget(getgenv(), 'writefile'))
+       local writefile = rawget(_G, 'writefile') or (type(getgenv) == "function" and getgenv().writefile) or _G.writefile
 		if type(writefile) ~= "function" then
 			syde:Toast({
 				Content = "Save not supported in this environment";
