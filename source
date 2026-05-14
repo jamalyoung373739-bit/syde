@@ -1456,18 +1456,7 @@ do
 						warn("[SYDE] Failed to create folder:", err)
 					end
 				end
-
-				-- Preload saved config into cache so flags created later can pick up their values
-				local configPath = string.format("%s/%s.json", folderName, fileName)
-				if isfile and isfile(configPath) then
-					local ok, content = pcall(readfile, configPath)
-					if ok and content then
-						local decodeOk, decoded = pcall(function() return https:JSONDecode(content) end)
-						if decodeOk and type(decoded) == "table" then
-							syde.LoadedConfig = decoded
-						end
-					end
-				end
+				-- No auto-load: values only get applied when the user clicks Load.
 			end
 
 
@@ -1793,7 +1782,7 @@ function syde:LoadSaveConfig(targetFile)
 			syde.ConfigFile = targetFile
 		end
 		if syde.Toast then
-			syde:Toast({ Content = 'Loaded ' .. tostring(applied or 0) .. ' flags from ' .. fileName, Duration = 3 })
+			syde:Toast({ Content = 'loaded your sorry ass config', Duration = 3 })
 		end
 		return true
 	end
@@ -1865,7 +1854,7 @@ function syde:SaveConfigAs(name)
 	if ok then
 		syde.ConfigFile = name
 		if syde.Toast then
-			syde:Toast({ Content = 'Saved ' .. count .. ' flags to ' .. name, Duration = 3 })
+			syde:Toast({ Content = 'saved your sorry ass config', Duration = 3 })
 		end
 		return true
 	else
