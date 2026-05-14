@@ -7532,9 +7532,6 @@ function syde:Init(library)
 			end)
 
 			function data:Set(NewValue, skipSave)
-
-				if data.V == NewValue then return end -- prevent duplicate calls
-
 				data.V = NewValue
 				UpdateToggleUI(NewValue)
 
