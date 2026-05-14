@@ -1456,7 +1456,29 @@ do
 						warn("[SYDE] Failed to create folder:", err)
 					end
 				end
-				-- No auto-load: values only get applied when the user clicks Load.
+
+				-- Only preload the saved config if AutoLoad was explicitly enabled
+				local autoloadPath = string.format("%s/_autoload.txt", folderName)
+				local autoload = false
+				if isfile and isfile(autoloadPath) then
+					local ok, content = pcall(readfile, autoloadPath)
+					if ok and content then
+						autoload = tostring(content):match("^%s*(.-)%s*$") == "1"
+					end
+				end
+
+				if autoload then
+					local configPath = string.format("%s/%s.json", folderName, fileName)
+					if isfile and isfile(configPath) then
+						local ok, content = pcall(readfile, configPath)
+						if ok and content then
+							local decodeOk, decoded = pcall(function() return https:JSONDecode(content) end)
+							if decodeOk and type(decoded) == "table" then
+								syde.LoadedConfig = decoded
+							end
+						end
+					end
+				end
 			end
 
 
@@ -1683,6 +1705,8 @@ function LoadConfig(Configuration)
 
 	local applied = 0
 
+	-- Suppress per-element notifications fired by callbacks during the bulk apply
+	syde.SuppressNotify = true
 	for FlagName, Flag in pairs(syde.Flags) do
 		local SavedValue = Decoded[FlagName]
 
@@ -1696,6 +1720,7 @@ function LoadConfig(Configuration)
 			end
 		end
 	end
+	syde.SuppressNotify = false
 
 	return true, applied
 end
@@ -1881,12 +1906,12 @@ local function autoloadFilePath()
 end
 
 function syde:GetAutoLoad()
-	-- Default ON if not explicitly set, matches the behavior in syde:Load
-	if not syde.ConfigEnabled or not isfile then return true end
+	-- Default OFF unless the user explicitly enables it
+	if not syde.ConfigEnabled or not isfile then return false end
 	local path = autoloadFilePath()
-	if not isfile(path) then return true end
+	if not isfile(path) then return false end
 	local ok, content = pcall(readfile, path)
-	if not ok or not content then return true end
+	if not ok or not content then return false end
 	return tostring(content):match("^%s*(.-)%s*$") == "1"
 end
 
@@ -1962,6 +1987,7 @@ for _, temp in ipairs(Library.Notification:GetChildren()) do
 end 
 
 function syde:Notify(Notification)
+	if syde.SuppressNotify then return end
 	task.spawn(function()
 
 		local NotifData = {
@@ -6415,6 +6441,14 @@ function syde:Init(library)
 				syde:LoadSaveConfig(syde.ConfigFile)
 				syde:LoadSettingsConfig()
 			end
+		})
+		a:Toggle({
+			Title = 'AutoLoad',
+			Description = 'Automatically apply the saved config when the UI loads.',
+			Value = syde:GetAutoLoad(),
+			CallBack = function(v)
+				syde:SetAutoLoad(v)
+			end,
 		})
 
 		b:Toggle({
