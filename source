@@ -1457,25 +1457,14 @@ do
 					end
 				end
 
-				-- AutoLoad: default ON unless user explicitly disabled it
-				local autoload = true
-				if isfile and isfile(string.format("%s/_autoload.txt", folderName)) then
-					local ok, content = pcall(readfile, string.format("%s/_autoload.txt", folderName))
+				-- Preload saved config into cache so flags created later can pick up their values
+				local configPath = string.format("%s/%s.json", folderName, fileName)
+				if isfile and isfile(configPath) then
+					local ok, content = pcall(readfile, configPath)
 					if ok and content then
-						autoload = tostring(content):match("^%s*(.-)%s*$") == "1"
-					end
-				end
-
-				if autoload then
-					-- Preload saved config into cache so flags created later can pick up their values
-					local configPath = string.format("%s/%s.json", folderName, fileName)
-					if isfile and isfile(configPath) then
-						local ok, content = pcall(readfile, configPath)
-						if ok and content then
-							local decodeOk, decoded = pcall(function() return https:JSONDecode(content) end)
-							if decodeOk and type(decoded) == "table" then
-								syde.LoadedConfig = decoded
-							end
+						local decodeOk, decoded = pcall(function() return https:JSONDecode(content) end)
+						if decodeOk and type(decoded) == "table" then
+							syde.LoadedConfig = decoded
 						end
 					end
 				end
@@ -6398,61 +6387,21 @@ function syde:Init(library)
 			})
 		end
 
-		local configDropdown
-
-		local function getConfigList()
-			local list = syde:ListConfigs()
-			if #list == 0 then
-				table.insert(list, syde.ConfigFile or 'Config')
-			end
-			return list
-		end
-
-		configDropdown = a:Dropdown({
-			Title = 'Config',
-			Options = getConfigList(),
-			PlaceHolder = 'Select a config...',
-			StarterOption = syde.ConfigFile,
-			CallBack = function() end,
-		})
-
 		a:Button({
 			Title = 'Save',
 			Description = 'Save all setting configurations.',
 			CallBack = function ()
-				local name = configDropdown and configDropdown:GetSelected() or syde.ConfigFile
-				if name and name ~= '' then
-					syde:SaveConfigAs(name)
-				end
+				syde:SaveConfigAs(syde.ConfigFile)
 				syde:SaveSettingsConfig()
-				if configDropdown then
-					configDropdown:SetOptions(getConfigList(), syde.ConfigFile)
-				end
 			end
 		})
 		a:Button({
 			Title = 'Load',
 			Description = 'Load all setting configurations.',
 			CallBack = function ()
-				local name = configDropdown and configDropdown:GetSelected() or syde.ConfigFile
-				if name and name ~= '' then
-					syde:LoadSaveConfig(name)
-				end
+				syde:LoadSaveConfig(syde.ConfigFile)
 				syde:LoadSettingsConfig()
-				if configDropdown then
-					configDropdown:SetOptions(getConfigList(), syde.ConfigFile)
-				end
 			end
-		})
-
-		a:Toggle({
-			Title = 'AutoLoad',
-			Description = 'Automatically load the active config on next start.',
-			Value = syde:GetAutoLoad(),
-			CallBack = function(v)
-				syde:SetAutoLoad(v)
-			end,
-			SFlag = 'CFG_AUTOLOAD',
 		})
 
 		b:Toggle({
