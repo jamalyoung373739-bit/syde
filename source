@@ -3512,27 +3512,6 @@ function syde:Init(library)
 				end
 			end
 
-			-- Auto-resize canvas as children change so all elements remain scrollable
-			Page.ChildAdded:Connect(function(child)
-				child:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-					syde:updateLayout(Page, 7)
-				end)
-				child:GetPropertyChangedSignal("Visible"):Connect(function()
-					syde:updateLayout(Page, 7)
-				end)
-				syde:updateLayout(Page, 7)
-			end)
-
-			Page.ChildRemoved:Connect(function()
-				syde:updateLayout(Page, 7)
-			end)
-
-			Page:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-				syde:updateLayout(Page, 7)
-			end)
-
-			syde:updateLayout(Page, 7)
-
 			-- === Tween Info ===
 			local bgTween = TweenInfo.new(0.4, Enum.EasingStyle.Exponential)
 			local textTween = TweenInfo.new(0.25, Enum.EasingStyle.Exponential)
@@ -6419,130 +6398,49 @@ function syde:Init(library)
 			})
 		end
 
+		local configDropdown
+
+		local function getConfigList()
+			local list = syde:ListConfigs()
+			if #list == 0 then
+				table.insert(list, syde.ConfigFile or 'Config')
+			end
+			return list
+		end
+
+		configDropdown = a:Dropdown({
+			Title = 'Config',
+			Options = getConfigList(),
+			PlaceHolder = 'Select a config...',
+			StarterOption = syde.ConfigFile,
+			CallBack = function() end,
+		})
+
 		a:Button({
 			Title = 'Save',
 			Description = 'Save all setting configurations.',
 			CallBack = function ()
+				local name = configDropdown and configDropdown:GetSelected() or syde.ConfigFile
+				if name and name ~= '' then
+					syde:SaveConfigAs(name)
+				end
 				syde:SaveSettingsConfig()
+				if configDropdown then
+					configDropdown:SetOptions(getConfigList(), syde.ConfigFile)
+				end
 			end
 		})
 		a:Button({
 			Title = 'Load',
 			Description = 'Load all setting configurations.',
 			CallBack = function ()
+				local name = configDropdown and configDropdown:GetSelected() or syde.ConfigFile
+				if name and name ~= '' then
+					syde:LoadSaveConfig(name)
+				end
 				syde:LoadSettingsConfig()
-			end
-		})
-
-		-- Config Manager
-		local pendingConfigName = nil
-		local configDropdown
-
-		local function refreshConfigList(selectName)
-			local list = syde:ListConfigs()
-			if #list == 0 then
-				table.insert(list, syde.ConfigFile or 'Config')
-			end
-			if configDropdown and configDropdown.SetOptions then
-				configDropdown:SetOptions(list, selectName or syde.ConfigFile)
-			end
-		end
-
-		local initialList = syde:ListConfigs()
-		if #initialList == 0 then
-			table.insert(initialList, syde.ConfigFile or 'Config')
-		end
-
-		configDropdown = a:Dropdown({
-			Title = 'Config',
-			Options = initialList,
-			PlaceHolder = 'Select a config...',
-			StarterOption = syde.ConfigFile,
-			CallBack = function(selected)
-				pendingConfigName = selected
-			end,
-		})
-
-		a:TextInput({
-			Title = 'New Config Name',
-			PlaceHolder = 'Name for Save As New...',
-			ClearOnLost = false,
-			CallBack = function(v)
-				pendingConfigName = v
-			end,
-		})
-
-		a:Button({
-			Title = 'Load Config',
-			Description = 'Override the current session with the selected config.',
-			CallBack = function()
-				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
-				if not name or name == '' then
-					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
-					return
-				end
-				if syde:LoadSaveConfig(name) then
-					refreshConfigList(name)
-				end
-			end
-		})
-
-		a:Button({
-			Title = 'Save Config',
-			Description = 'Save current state to the selected config.',
-			CallBack = function()
-				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
-				if not name or name == '' then
-					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
-					return
-				end
-				if syde:SaveConfigAs(name) then
-					syde:Toast({ Content = 'Saved: ' .. name, Duration = 3 })
-					refreshConfigList(name)
-				else
-					syde:Toast({ Content = 'Save failed', Duration = 3 })
-				end
-			end
-		})
-
-		a:Button({
-			Title = 'Save As New',
-			Description = 'Save current state to a new config (uses name from text input).',
-			CallBack = function()
-				local name = pendingConfigName
-				if not name or name == '' then
-					syde:Toast({ Content = 'Type a name first', Duration = 3 })
-					return
-				end
-				if syde:SaveConfigAs(name) then
-					syde:Toast({ Content = 'Created: ' .. name, Duration = 3 })
-					refreshConfigList(name)
-				else
-					syde:Toast({ Content = 'Save failed', Duration = 3 })
-				end
-			end
-		})
-
-		a:Button({
-			Title = 'Delete Config',
-			Description = 'Hold to delete the selected config file.',
-			Type = 'Hold',
-			HoldTime = 2,
-			CallBack = function()
-				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
-				if not name or name == '' then
-					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
-					return
-				end
-				if name == syde.ConfigFile then
-					syde:Toast({ Content = "Can't delete the active config", Duration = 3 })
-					return
-				end
-				if syde:DeleteConfig(name) then
-					syde:Toast({ Content = 'Deleted: ' .. name, Duration = 3 })
-					refreshConfigList()
-				else
-					syde:Toast({ Content = 'Delete failed', Duration = 3 })
+				if configDropdown then
+					configDropdown:SetOptions(getConfigList(), syde.ConfigFile)
 				end
 			end
 		})
