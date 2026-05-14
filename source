@@ -7291,7 +7291,6 @@ function syde:Init(library)
 				if not success then
 					warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 				end
-				SaveConfig()
 			end)
 
 			--[DESC]
@@ -7462,7 +7461,6 @@ function syde:Init(library)
 							if not success then
 								warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 							end
-							SaveConfig()
 						end
 
 
@@ -7525,11 +7523,6 @@ function syde:Init(library)
 					if not success then
 						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
 					end
-				end
-
-				-- ALWAYS save unless explicitly skipped (like during LoadConfig)
-				if not skipSave then
-					SaveConfig()
 				end
 			end
 
@@ -7734,7 +7727,6 @@ function syde:Init(library)
 
 
 						Options:Set(newValue)
-						SaveConfig()
 
 					end
 				end
@@ -7815,9 +7807,6 @@ function syde:Init(library)
 					end
 
 					Options.StarterValue = NewVal
-					if not skipSave then
-						SaveConfig()
-					end
 				end
 
 				if syde.ConfigEnabled and Options.Flag then
@@ -9479,7 +9468,6 @@ function syde:Init(library)
 					SV:Disconnect()
 					SV = nil
 					AddRecentColor(data.Color)
-					SaveConfig()
 				end
 			end)
 
@@ -9501,7 +9489,6 @@ function syde:Init(library)
 					HUE:Disconnect()
 					HUE = nil
 					AddRecentColor(data.Color)
-					SaveConfig()
 				end
 			end)
 
@@ -9696,10 +9683,6 @@ function syde:Init(library)
 				HSV[1], HSV[2], HSV[3] = h, s, v
 
 				updatestuff()
-
-				if not skipSave then
-					SaveConfig()
-				end
 			end
 
 			if syde.ConfigEnabled and data.Flag then
