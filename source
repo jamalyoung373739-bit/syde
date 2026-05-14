@@ -1698,9 +1698,12 @@ function LoadConfig(Configuration)
 		local SavedValue = Decoded[FlagName]
 
 		if SavedValue ~= nil then
-			local success = ApplyFlag(Flag, SavedValue)
-			if success then
+			-- Isolate each flag so a single bad one doesn't break the whole load
+			local ok, success = pcall(ApplyFlag, Flag, SavedValue)
+			if ok and success then
 				changed = true
+			elseif not ok then
+				warn("Syde 〡 Failed to apply flag '" .. tostring(FlagName) .. "':", success)
 			end
 		end
 	end
@@ -1778,10 +1781,6 @@ function syde:LoadSaveConfig(targetFile)
 		return false
 	end
 
-	if syde.Toast then
-		syde:Toast({ Content = 'Loading Save File Please Do Not Close', Duration = 3 })
-	end
-
 	local success, result = pcall(function()
 		return LoadConfig(readfile(filePath))
 	end)
@@ -1791,12 +1790,15 @@ function syde:LoadSaveConfig(targetFile)
 			syde.ConfigFile = targetFile
 		end
 		if syde.Toast then
-			syde:Toast({ Content = 'Loaded Save File', Duration = 3 })
+			syde:Toast({ Content = 'Loaded config', Duration = 3 })
 		end
 		return true
 	end
 
 	warn("[SYDE] Configurations Error " .. tostring(result))
+	if syde.Toast then
+		syde:Toast({ Content = 'Failed to load config', Duration = 3 })
+	end
 	return false
 end
 
