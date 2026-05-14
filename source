@@ -1675,13 +1675,13 @@ end
 function LoadConfig(Configuration)
 	if type(Configuration) ~= "string" then
 		warn("Syde 〡 Invalid config format.")
-		return false
+		return false, 0
 	end
 
 	local Decoded = SafeDecode(Configuration)
 	if not Decoded then
 		warn("Syde 〡 Failed to decode config.")
-		return false
+		return false, 0
 	end
 
 	-- Cache so flags registered later can still apply their saved values
@@ -1692,7 +1692,7 @@ function LoadConfig(Configuration)
 		warn("Syde 〡 Config version mismatch.")
 	end
 
-	local changed = false
+	local applied = 0
 
 	for FlagName, Flag in pairs(syde.Flags) do
 		local SavedValue = Decoded[FlagName]
@@ -1701,14 +1701,14 @@ function LoadConfig(Configuration)
 			-- Isolate each flag so a single bad one doesn't break the whole load
 			local ok, success = pcall(ApplyFlag, Flag, SavedValue)
 			if ok and success then
-				changed = true
+				applied = applied + 1
 			elseif not ok then
 				warn("Syde 〡 Failed to apply flag '" .. tostring(FlagName) .. "':", success)
 			end
 		end
 	end
 
-	return changed
+	return true, applied
 end
 
 -- Apply a cached saved value to a flag, if one exists
@@ -1769,33 +1769,36 @@ function SaveConfig()
 end
 
 function syde:LoadSaveConfig(targetFile)
-	if not syde.ConfigEnabled then return false end
+	if not syde.ConfigEnabled then
+		if syde.Toast then syde:Toast({ Content = 'Configs disabled in syde:Load', Duration = 3 }) end
+		return false
+	end
 
 	local fileName = targetFile or syde.ConfigFile
 	local filePath = string.format("%s/%s.json", syde.ConfigFolder, fileName)
 
 	if not isfile or not isfile(filePath) then
 		if syde.Toast then
-			syde:Toast({ Content = 'No save file found', Duration = 3 })
+			syde:Toast({ Content = 'No save file found at ' .. filePath, Duration = 3 })
 		end
 		return false
 	end
 
-	local success, result = pcall(function()
+	local ok, decoded, applied = pcall(function()
 		return LoadConfig(readfile(filePath))
 	end)
 
-	if success then
+	if ok and decoded then
 		if targetFile then
 			syde.ConfigFile = targetFile
 		end
 		if syde.Toast then
-			syde:Toast({ Content = 'Loaded config', Duration = 3 })
+			syde:Toast({ Content = 'Loaded ' .. tostring(applied or 0) .. ' flags from ' .. fileName, Duration = 3 })
 		end
 		return true
 	end
 
-	warn("[SYDE] Configurations Error " .. tostring(result))
+	warn("[SYDE] Configurations Error " .. tostring(decoded))
 	if syde.Toast then
 		syde:Toast({ Content = 'Failed to load config', Duration = 3 })
 	end
@@ -1821,22 +1824,33 @@ function syde:ListConfigs()
 end
 
 function syde:SaveConfigAs(name)
-	if not syde.ConfigEnabled then return false end
+	if not syde.ConfigEnabled then
+		if syde.Toast then syde:Toast({ Content = 'Configs disabled in syde:Load', Duration = 3 }) end
+		return false
+	end
 	if type(name) ~= "string" or name == "" then return false end
-	if not writefile then return false end
+	if not writefile then
+		if syde.Toast then syde:Toast({ Content = 'Executor has no writefile', Duration = 3 }) end
+		return false
+	end
 
 	local Data = { _version = CONFIG_VERSION }
+	local count = 0
 	for FlagName, Flag in pairs(syde.Flags) do
 		if Flag.Type == "ColorPicker" then
 			if Flag.Color then
 				Data[FlagName] = syde:ColorPack(Flag.Color)
+				count = count + 1
 			end
 		elseif Flag.V ~= nil then
 			Data[FlagName] = Flag.V
+			count = count + 1
 		elseif Flag.Color then
 			Data[FlagName] = syde:ColorPack(Flag.Color)
+			count = count + 1
 		elseif Flag.StarterValue ~= nil then
 			Data[FlagName] = Flag.StarterValue
+			count = count + 1
 		end
 	end
 
@@ -1844,13 +1858,21 @@ function syde:SaveConfigAs(name)
 		makefolder(syde.ConfigFolder)
 	end
 
-	local ok = pcall(function()
+	local ok, err = pcall(function()
 		writefile(string.format("%s/%s.json", syde.ConfigFolder, name), HttpService:JSONEncode(Data))
 	end)
 
 	if ok then
 		syde.ConfigFile = name
+		if syde.Toast then
+			syde:Toast({ Content = 'Saved ' .. count .. ' flags to ' .. name, Duration = 3 })
+		end
 		return true
+	else
+		warn("[SYDE] Save failed:", err)
+		if syde.Toast then
+			syde:Toast({ Content = 'Save failed: ' .. tostring(err), Duration = 3 })
+		end
 	end
 	return false
 end
