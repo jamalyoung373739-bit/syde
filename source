@@ -127,6 +127,7 @@ local syde = {
 	ConfigFile = 'Config';
 	Flags = {};
 	SettingsFlags = {};
+	LoadedConfig = nil;
 }
 
 -- @Utilities
@@ -1442,13 +1443,11 @@ do
 			if Config.ConfigurationSaving and Config.ConfigurationSaving.Enabled then
 				local folderName = Config.ConfigurationSaving.FolderName or "SydeSec"
 				local fileName = Config.ConfigurationSaving.FileName or "default_config"
-				local fullPath = folderName .. "/" .. fileName .. ".lua"
 
 				syde.ConfigEnabled = true
-				syde.ConfigFolder = folderName  
-				syde.ConfigFile = fileName     
+				syde.ConfigFolder = folderName
+				syde.ConfigFile = fileName
 
-				-- Ensure folder exists
 				if isfolder and not isfolder(folderName) then
 					local success, err = pcall(function()
 						makefolder(folderName)
@@ -1458,17 +1457,16 @@ do
 					end
 				end
 
-				-- File validation
-				local success, err = pcall(function()
-					if isfile and not isfile(fullPath) then
-						writefile(fullPath, "-- Protected UI Configuration")
-					else
-						local content = readfile(fullPath)
+				-- Preload saved config into cache so flags created later can pick up their values
+				local configPath = string.format("%s/%s.json", folderName, fileName)
+				if isfile and isfile(configPath) then
+					local ok, content = pcall(readfile, configPath)
+					if ok and content then
+						local decodeOk, decoded = pcall(function() return https:JSONDecode(content) end)
+						if decodeOk and type(decoded) == "table" then
+							syde.LoadedConfig = decoded
+						end
 					end
-				end)
-
-				if not success then
-					warn("[SYDE] File write/read blocked or failed:", err)
 				end
 			end
 
@@ -1645,7 +1643,7 @@ local function ApplyFlag(Flag, Value)
 		local unpacked = syde:ColorUnpack(Value)
 
 		if Flag.Set then
-			Flag:Set(unpacked)
+			Flag:Set(unpacked, true)
 		elseif Flag.Color then
 			Flag.Color = unpacked
 		end
@@ -1655,7 +1653,7 @@ local function ApplyFlag(Flag, Value)
 
 	-- Standard Setter
 	if Flag.Set then
-		Flag:Set(Value)
+		Flag:Set(Value, true)
 		return true
 	end
 
@@ -1686,6 +1684,9 @@ function LoadConfig(Configuration)
 		return false
 	end
 
+	-- Cache so flags registered later can still apply their saved values
+	syde.LoadedConfig = Decoded
+
 	-- Version check (future ready)
 	if Decoded._version and Decoded._version ~= CONFIG_VERSION then
 		warn("Syde 〡 Config version mismatch.")
@@ -1702,11 +1703,18 @@ function LoadConfig(Configuration)
 				changed = true
 			end
 		end
-
-		print("Loading Flag:", FlagName, "Value:", SavedValue)
 	end
 
 	return changed
+end
+
+-- Apply a cached saved value to a flag, if one exists
+function syde:ApplyCachedFlag(Flag)
+	if not Flag or not Flag.Flag then return end
+	if not self.LoadedConfig then return end
+	local saved = self.LoadedConfig[Flag.Flag]
+	if saved == nil then return end
+	ApplyFlag(Flag, saved)
 end
 
 -- Internal Save Logic
@@ -1720,13 +1728,15 @@ local function PerformSave()
 
 	for FlagName, Flag in pairs(syde.Flags) do
 		if Flag.Type == "ColorPicker" then
+			if Flag.Color then
+				Data[FlagName] = syde:ColorPack(Flag.Color)
+			end
+		elseif Flag.V ~= nil then
+			Data[FlagName] = Flag.V
+		elseif Flag.Color then
 			Data[FlagName] = syde:ColorPack(Flag.Color)
-		else
-			Data[FlagName] =
-				Flag.V ~= nil and Flag.V
-				or Flag.Color
-				or Flag.StarterValue
-				or false
+		elseif Flag.StarterValue ~= nil then
+			Data[FlagName] = Flag.StarterValue
 		end
 	end
 
@@ -1753,6 +1763,104 @@ function SaveConfig()
 	end
 
 	SaveDebounce = task.delay(SAVE_DELAY, PerformSave)
+end
+
+function syde:LoadSaveConfig(targetFile)
+	if not syde.ConfigEnabled then return false end
+
+	local fileName = targetFile or syde.ConfigFile
+	local filePath = string.format("%s/%s.json", syde.ConfigFolder, fileName)
+
+	if not isfile or not isfile(filePath) then
+		if syde.Toast then
+			syde:Toast({ Content = 'No save file found', Duration = 3 })
+		end
+		return false
+	end
+
+	if syde.Toast then
+		syde:Toast({ Content = 'Loading Save File Please Do Not Close', Duration = 3 })
+	end
+
+	local success, result = pcall(function()
+		return LoadConfig(readfile(filePath))
+	end)
+
+	if success then
+		if targetFile then
+			syde.ConfigFile = targetFile
+		end
+		if syde.Toast then
+			syde:Toast({ Content = 'Loaded Save File', Duration = 3 })
+		end
+		return true
+	end
+
+	warn("[SYDE] Configurations Error " .. tostring(result))
+	return false
+end
+
+function syde:ListConfigs()
+	local list = {}
+	if not syde.ConfigEnabled then return list end
+	if not listfiles or not isfolder or not isfolder(syde.ConfigFolder) then return list end
+
+	local ok, files = pcall(listfiles, syde.ConfigFolder)
+	if not ok or type(files) ~= "table" then return list end
+
+	for _, full in ipairs(files) do
+		local name = tostring(full):match("([^/\\]+)%.json$")
+		if name and name ~= "SettingsConfig" then
+			table.insert(list, name)
+		end
+	end
+	table.sort(list)
+	return list
+end
+
+function syde:SaveConfigAs(name)
+	if not syde.ConfigEnabled then return false end
+	if type(name) ~= "string" or name == "" then return false end
+	if not writefile then return false end
+
+	local Data = { _version = CONFIG_VERSION }
+	for FlagName, Flag in pairs(syde.Flags) do
+		if Flag.Type == "ColorPicker" then
+			if Flag.Color then
+				Data[FlagName] = syde:ColorPack(Flag.Color)
+			end
+		elseif Flag.V ~= nil then
+			Data[FlagName] = Flag.V
+		elseif Flag.Color then
+			Data[FlagName] = syde:ColorPack(Flag.Color)
+		elseif Flag.StarterValue ~= nil then
+			Data[FlagName] = Flag.StarterValue
+		end
+	end
+
+	if makefolder and isfolder and not isfolder(syde.ConfigFolder) then
+		makefolder(syde.ConfigFolder)
+	end
+
+	local ok = pcall(function()
+		writefile(string.format("%s/%s.json", syde.ConfigFolder, name), HttpService:JSONEncode(Data))
+	end)
+
+	if ok then
+		syde.ConfigFile = name
+		return true
+	end
+	return false
+end
+
+function syde:DeleteConfig(name)
+	if not syde.ConfigEnabled then return false end
+	if type(name) ~= "string" or name == "" then return false end
+	local filePath = string.format("%s/%s.json", syde.ConfigFolder, name)
+	if isfile and isfile(filePath) and delfile then
+		return pcall(delfile, filePath)
+	end
+	return false
 end
 
 
@@ -2841,8 +2949,6 @@ function syde:Init(library)
 		layout:Bind()
 		layout:Update()
 
-		print("LATENCY SCRIPT RUNNING")
-
 		local Stats = game:GetService("Stats")
 		local TweenService = game:GetService("TweenService")
 
@@ -3023,8 +3129,6 @@ function syde:Init(library)
 			while true do
 
 				local ping = getPing()
-				-- replace with getPing() when ready
-				print(ping)
 
 				table.insert(history,ping)
 
@@ -5224,6 +5328,25 @@ function syde:Init(library)
 				end
 
 				SetDropdownOptions()
+
+				function data:GetSelected()
+					return SelectedOrder[1]
+				end
+
+				function data:SetOptions(newOptions)
+					data.Options = newOptions or {}
+					for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
+						if child:IsA("Frame") and child.Name ~= "Option" then
+							child:Destroy()
+						end
+					end
+					SelectedOptions = {}
+					SelectedOrder = {}
+					dropdown.dropholder.drop.selected.Text = data.PlaceHolder
+					SetDropdownOptions()
+				end
+
+				return data
 			end
 
 			function telement:Slider(Slider)
@@ -6248,6 +6371,109 @@ function syde:Init(library)
 			Description = 'Load all setting configurations.',
 			CallBack = function ()
 				syde:LoadSettingsConfig()
+			end
+		})
+
+		-- Config Manager UI
+		local pendingConfigName = nil
+
+		local configList = syde:ListConfigs()
+		if #configList == 0 then
+			table.insert(configList, syde.ConfigFile or 'Config')
+		end
+
+		local configDropdown
+		configDropdown = a:Dropdown({
+			Title = 'Configs',
+			Options = configList,
+			PlaceHolder = 'Select a config...',
+			StarterOption = syde.ConfigFile,
+			CallBack = function(selected)
+				pendingConfigName = selected
+			end,
+		})
+
+		a:TextInput({
+			Title = 'New Config Name',
+			PlaceHolder = 'Type a name then press Save New...',
+			ClearOnLost = false,
+			CallBack = function(v)
+				pendingConfigName = v
+			end,
+		})
+
+		a:Button({
+			Title = 'Override (Load Selected)',
+			Description = 'Apply the selected config to the current session.',
+			CallBack = function()
+				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
+				if not name or name == '' then
+					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
+					return
+				end
+				syde:LoadSaveConfig(name)
+			end
+		})
+
+		a:Button({
+			Title = 'Save To Selected',
+			Description = 'Overwrite the selected config with the current state.',
+			CallBack = function()
+				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
+				if not name or name == '' then
+					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
+					return
+				end
+				if syde:SaveConfigAs(name) then
+					syde:Toast({ Content = 'Saved config: ' .. name, Duration = 3 })
+					if configDropdown and configDropdown.SetOptions then
+						configDropdown:SetOptions(syde:ListConfigs())
+					end
+				else
+					syde:Toast({ Content = 'Save failed', Duration = 3 })
+				end
+			end
+		})
+
+		a:Button({
+			Title = 'Save As New',
+			Description = 'Save the current state as a new config (uses name from text input).',
+			CallBack = function()
+				local name = pendingConfigName
+				if not name or name == '' then
+					syde:Toast({ Content = 'Type a name first', Duration = 3 })
+					return
+				end
+				if syde:SaveConfigAs(name) then
+					syde:Toast({ Content = 'Created config: ' .. name, Duration = 3 })
+					if configDropdown and configDropdown.SetOptions then
+						configDropdown:SetOptions(syde:ListConfigs())
+					end
+				else
+					syde:Toast({ Content = 'Save failed', Duration = 3 })
+				end
+			end
+		})
+
+		a:Button({
+			Title = 'Delete Selected',
+			Description = 'Remove the selected config file.',
+			Type = 'Hold',
+			HoldTime = 2,
+			CallBack = function()
+				local name = (configDropdown and configDropdown.GetSelected and configDropdown:GetSelected()) or pendingConfigName
+				if not name or name == '' then
+					syde:Toast({ Content = 'Pick a config first', Duration = 3 })
+					return
+				end
+				if syde:DeleteConfig(name) then
+					syde:Toast({ Content = 'Deleted: ' .. name, Duration = 3 })
+					if configDropdown and configDropdown.SetOptions then
+						configDropdown:SetOptions(syde:ListConfigs())
+					end
+				else
+					syde:Toast({ Content = 'Delete failed', Duration = 3 })
+				end
 			end
 		})
 
@@ -7378,14 +7604,10 @@ function syde:Init(library)
 				end
 			end
 
-			-- If config already loaded before element creation
-			if syde.ConfigEnabled and data.Flag and syde.Flags[data.Flag] and syde.Flags[data.Flag].V ~= nil then
-				data:Set(syde.Flags[data.Flag].V, true)
-			end
-
-			if syde.ConfigEnabled then
-				if data.Flag then
-					syde.Flags[data.Flag] = data
+			if syde.ConfigEnabled and data.Flag then
+				syde.Flags[data.Flag] = data
+				if syde.LoadedConfig and syde.LoadedConfig[data.Flag] ~= nil then
+					data:Set(syde.LoadedConfig[data.Flag], true)
 				end
 			end
 
@@ -7664,12 +7886,15 @@ function syde:Init(library)
 					end
 
 					Options.StarterValue = NewVal
-					SaveConfig()
+					if not skipSave then
+						SaveConfig()
+					end
 				end
 
-				if syde.ConfigEnabled then
-					if Options.Flag then
-						syde.Flags[Options.Flag] = Options
+				if syde.ConfigEnabled and Options.Flag then
+					syde.Flags[Options.Flag] = Options
+					if syde.LoadedConfig and syde.LoadedConfig[Options.Flag] ~= nil then
+						Options:Set(syde.LoadedConfig[Options.Flag], true)
 					end
 				end
 
@@ -9548,9 +9773,14 @@ function syde:Init(library)
 				end
 			end
 
-			if syde.ConfigEnabled then
-				if data.Flag then
-					syde.Flags[data.Flag] = data
+			if syde.ConfigEnabled and data.Flag then
+				syde.Flags[data.Flag] = data
+				if syde.LoadedConfig and syde.LoadedConfig[data.Flag] ~= nil then
+					local saved = syde.LoadedConfig[data.Flag]
+					local unpacked = syde:ColorUnpack(saved)
+					if typeof(unpacked) == "Color3" then
+						data:Set(unpacked, true)
+					end
 				end
 			end
 
@@ -9558,35 +9788,6 @@ function syde:Init(library)
 
 			return data
 
-		end
-
-		function syde:LoadSaveConfig()
-			local notified = false
-			local loaded = false
-
-			if syde.ConfigEnabled then
-				syde:Toast({
-					Content = 'Loading Save File Please Do Not Close';
-					Duration = 3
-				})
-				task.wait(1)
-				local success, result = pcall(function()
-					local filePath = string.format("%s/%s.json", syde.ConfigFolder, syde.ConfigFile)
-					if isfile and isfile(filePath) then
-						loaded = LoadConfig(readfile(filePath))
-					end
-				end)
-
-				if success then
-					syde:Toast({
-						Content = 'Loaded Save File';
-						Duration = 3
-					})
-					print("Configuration loaded successfully from a previous session.")
-				elseif not success then
-					warn("[SYDE] Configurations Error " .. tostring(result))
-				end
-			end
 		end
 
 		return initelement
