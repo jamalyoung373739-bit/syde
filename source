@@ -6426,29 +6426,125 @@ function syde:Init(library)
 			})
 		end
 
+		-- // Configurations
+		local currentConfigName = syde.ConfigFile or "Config"
+		local selectedConfig
+		local autoloadEnabled = syde:GetAutoLoad() and true or false
+		local autoloadButtonRef
+		local configDropdownData
+
+		local function refreshConfigList()
+			if configDropdownData and configDropdownData.SetOptions then
+				configDropdownData:SetOptions(syde:ListConfigs() or {})
+			end
+		end
+
+		local function updateAutoLoadLabel()
+			if autoloadButtonRef and autoloadButtonRef:FindFirstChild('title') then
+				autoloadButtonRef.title.Text = autoloadEnabled and 'AutoLoad: ON' or 'AutoLoad: OFF'
+				autoloadButtonRef.title.Size = UDim2.new(0, 120, 0, 35)
+			end
+		end
+
+		local function resolveConfigName()
+			if selectedConfig and selectedConfig ~= "" then return selectedConfig end
+			if currentConfigName and currentConfigName ~= "" then return currentConfigName end
+			return syde.ConfigFile
+		end
+
 		a:Button({
 			Title = 'Save',
-			Description = 'Save all setting configurations.',
 			CallBack = function ()
-				syde:SaveConfigAs(syde.ConfigFile)
+				local name = (currentConfigName and currentConfigName ~= "") and currentConfigName or syde.ConfigFile
+				syde:SaveConfigAs(name)
 				syde:SaveSettingsConfig()
+				refreshConfigList()
 			end
 		})
 		a:Button({
 			Title = 'Load',
-			Description = 'Load all setting configurations.',
 			CallBack = function ()
-				syde:LoadSaveConfig(syde.ConfigFile)
+				local name = resolveConfigName()
+				syde:LoadSaveConfig(name)
 				syde:LoadSettingsConfig()
 			end
 		})
-		a:Toggle({
+		a:Button({
 			Title = 'AutoLoad',
-			Description = 'Automatically apply the saved config when the UI loads.',
-			Value = syde:GetAutoLoad(),
-			CallBack = function(v)
-				syde:SetAutoLoad(v)
-			end,
+			CallBack = function ()
+				autoloadEnabled = not autoloadEnabled
+				syde:SetAutoLoad(autoloadEnabled)
+				updateAutoLoadLabel()
+				if syde.Toast then
+					syde:Toast({ Content = 'AutoLoad: ' .. (autoloadEnabled and 'ON' or 'OFF'), Duration = 3 })
+				end
+			end
+		})
+		a:Button({
+			Title = 'Overwrite',
+			CallBack = function ()
+				local name = resolveConfigName()
+				if not name or name == "" then
+					if syde.Toast then syde:Toast({ Content = 'No config to overwrite', Duration = 3 }) end
+					return
+				end
+				syde:SaveConfigAs(name)
+				syde:SaveSettingsConfig()
+				if syde.Toast then syde:Toast({ Content = 'Overwrote: ' .. name, Duration = 3 }) end
+				refreshConfigList()
+			end
+		})
+
+		-- Arrange the four buttons in a 2x2 grid
+		do
+			local themePage = window.settings.pages:FindFirstChild('Theme')
+			if themePage then
+				local saveBtn = themePage:FindFirstChild('Save')
+				local loadBtn = themePage:FindFirstChild('Load')
+				local autoloadBtn = themePage:FindFirstChild('AutoLoad')
+				local overwriteBtn = themePage:FindFirstChild('Overwrite')
+				autoloadButtonRef = autoloadBtn
+				updateAutoLoadLabel()
+
+				local grid = Instance.new('Frame')
+				grid.Name = 'ConfigButtons'
+				grid.BackgroundTransparency = 1
+				grid.BorderSizePixel = 0
+				grid.Size = UDim2.new(1, -35, 0, 90)
+				grid.Parent = themePage
+
+				local gridLayout = Instance.new('UIGridLayout')
+				gridLayout.CellSize = UDim2.new(0.5, -5, 0, 40)
+				gridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+				gridLayout.FillDirectionMaxCells = 2
+				gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+				gridLayout.Parent = grid
+
+				for i, btn in ipairs({saveBtn, loadBtn, autoloadBtn, overwriteBtn}) do
+					if btn then
+						btn.Parent = grid
+						btn.LayoutOrder = i
+					end
+				end
+			end
+		end
+
+		a:TextInput({
+			Title = 'Config Name',
+			PlaceHolder = 'Enter config name',
+			ClearOnLost = false,
+			CallBack = function (v)
+				currentConfigName = v
+			end
+		})
+
+		configDropdownData = a:Dropdown({
+			Title = 'Saved Configs',
+			Options = syde:ListConfigs() or {},
+			PlaceHolder = 'Select a config',
+			CallBack = function (v)
+				selectedConfig = v
+			end
 		})
 
 		b:Toggle({
