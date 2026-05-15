@@ -16,7 +16,7 @@ local players =         game:GetService("Players"):GetPlayers()
 local textservice =     game:GetService('TextService')
 local player =          game:GetService('Players')
 local textservice =     game:GetService('TextService')
-local coregui =         game:GetService("CoreGui")
+local coregui =         (gethui and gethui()) or game:GetService("CoreGui")
 
 -- update check
 local update = false
