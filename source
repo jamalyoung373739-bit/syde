@@ -3259,6 +3259,23 @@ function syde:Init(library)
 
 		local placeId = game.PlaceId
 
+		-- Cross-executor HTTP GET. game:HttpGet is not present in every
+		-- executor environment (the "HttpGet is not a valid member of
+		-- DataModel" error), so prefer the executor request functions and
+		-- only fall back to game:HttpGet when nothing else is available.
+		local httpRequest = (syn and syn.request)
+			or (http and http.request)
+			or http_request
+			or request
+
+		local function httpGet(url)
+			if httpRequest then
+				local response = httpRequest({ Url = url, Method = "GET" })
+				return response and response.Body
+			end
+			return game:HttpGet(url)
+		end
+
 		local function ServerHop()
 
 			local cursor = ""
@@ -3273,10 +3290,13 @@ function syde:Init(library)
 					"/servers/Public?sortOrder=Asc&limit=100&cursor="
 					..cursor
 
-				local response =
-					HttpService:JSONDecode(
-						game:HttpGet(url)
-					)
+				local ok, response = pcall(function()
+					return HttpService:JSONDecode(httpGet(url))
+				end)
+
+				if not ok or type(response) ~= "table" or not response.data then
+					break
+				end
 
 				for _,server in pairs(response.data) do
 
