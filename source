@@ -6267,42 +6267,15 @@ function syde:Init(library)
 		})
 
 		local function verifyDiscord(id)
-			-- Try Roblox GetAsync first
-			if HttpService.HttpEnabled then
-				local ok, res = pcall(function()
-					return HttpService:GetAsync(VERIFY_ENDPOINT .. id, true)
-				end)
-				if ok and res then
-					local decodedOk, decoded = pcall(function()
-						return HttpService:JSONDecode(res)
-					end)
-					if decodedOk and type(decoded) == "table" and decoded.verified then
-						return true, decoded.discordUsername or nil
-					end
-				end
-				return false, nil
-			end
+			local httpFn = syn and syn.request or http_request or request
+			if not httpFn then return false, nil end
 
-			-- Fallback: executor HTTP
-			local success, result = pcall(function()
-				if syn and syn.request then
-					local r = syn.request({ Url = VERIFY_ENDPOINT .. id, Method = "GET" })
-					local decoded = HttpService:JSONDecode(r.Body)
-					if decoded.verified then
-						return decoded.discordUsername or nil
-					end
-				elseif request then
-					local r = request({ Url = VERIFY_ENDPOINT .. id, Method = "GET" })
-					local decoded = HttpService:JSONDecode(r.Body)
-					if decoded.verified then
-						return decoded.discordUsername or nil
-					end
-				end
-				return nil
-			end)
+			local ok, r = pcall(httpFn, { Url = VERIFY_ENDPOINT .. id, Method = "GET" })
+			if not ok or not r or not r.Body then return false, nil end
 
-			if success and result then
-				return true, result
+			local decodeOk, decoded = pcall(function() return HttpService:JSONDecode(r.Body) end)
+			if decodeOk and type(decoded) == "table" and decoded.verified then
+				return true, decoded.discordUsername or nil
 			end
 
 			return false, nil
