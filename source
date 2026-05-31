@@ -176,6 +176,105 @@ function syde:UpdateTheme(Config)
 	end
 end
 
+-- @ControllerSupport / numeric helpers
+
+-- True if an input can be used as a bind (keyboard key OR controller button)
+function syde:IsBindableInput(input)
+	local t = input.UserInputType
+	if t == Enum.UserInputType.Keyboard then
+		return true
+	end
+	if string.find(tostring(t), "Gamepad", 1, true) then
+		return input.KeyCode ~= Enum.KeyCode.Unknown
+	end
+	return false
+end
+
+-- Number of decimal places a number has (handles 0.01, 0.05, etc. correctly)
+function syde:DecimalPlaces(num)
+	local str = string.format("%.10f", tonumber(num) or 0)
+	str = str:gsub("0+$", "")
+	str = str:gsub("%.$", "")
+	local dot = string.find(str, "%.", 1, true)
+	if not dot then
+		return 0
+	end
+	return #str - dot
+end
+
+-- Round a number to a fixed number of decimal places (removes float drift)
+function syde:RoundTo(num, decimals)
+	local mult = 10 ^ (decimals or 0)
+	return math.floor(num * mult + 0.5) / mult
+end
+
+-- Make a slider's value label clickable so the user can type an exact number.
+-- Out-of-range or invalid input reverts to the previous value.
+function syde:AttachSliderInput(Slider, Options)
+	local valueLabel = Slider:FindFirstChild("v")
+	if not valueLabel or valueLabel:FindFirstChild("ValueInput") then
+		return
+	end
+
+	local originalTransparency = valueLabel.TextTransparency
+
+	local editBox = Instance.new("TextBox")
+	editBox.Name = "ValueInput"
+	editBox.BackgroundTransparency = 1
+	editBox.Text = ""
+	editBox.PlaceholderText = ""
+	editBox.TextEditable = true
+	editBox.ClearTextOnFocus = false
+	editBox.RichText = false
+	editBox.MultiLine = false
+	editBox.Active = true
+	editBox.Selectable = true
+	editBox.TextSize = 14
+	editBox.TextColor3 = valueLabel.TextColor3
+	editBox.TextXAlignment = valueLabel.TextXAlignment
+	editBox.TextYAlignment = valueLabel.TextYAlignment
+	editBox.Size = UDim2.fromScale(1, 1)
+	editBox.Position = UDim2.fromScale(0, 0)
+	editBox.ZIndex = valueLabel.ZIndex + 5
+
+	local okFont = pcall(function() editBox.FontFace = valueLabel.FontFace end)
+	if not okFont then
+		pcall(function() editBox.Font = valueLabel.Font end)
+	end
+
+	editBox.Parent = valueLabel
+
+	editBox.Focused:Connect(function()
+		local dp = syde:DecimalPlaces(Options.Increment)
+		editBox.Text = string.format("%." .. dp .. "f", tonumber(Options.StarterValue) or 0)
+		valueLabel.TextTransparency = 1
+	end)
+
+	editBox.FocusLost:Connect(function()
+		local typed = tonumber(editBox.Text)
+		editBox.Text = ""
+		valueLabel.TextTransparency = originalTransparency
+
+		local low = math.min(Options.Range[1], Options.Range[2])
+		local high = math.max(Options.Range[1], Options.Range[2])
+
+		-- only apply when the typed number is a real number inside the slider range
+		if typed and typed >= low and typed <= high and Options.Set then
+			local inc = Options.Increment or 1
+			if inc > 0 then
+				-- snap to the slider's increment and round away float drift
+				typed = math.floor((typed - low) / inc + 0.5) * inc + low
+				typed = syde:RoundTo(typed, syde:DecimalPlaces(inc))
+				typed = math.clamp(typed, low, high)
+			end
+			Options:Set(typed)
+		end
+		-- out of range / invalid -> do nothing, label keeps its previous value
+	end)
+
+	return editBox
+end
+
 -- fractality
 
 local RunService = game:GetService'RunService'
@@ -3259,6 +3358,23 @@ function syde:Init(library)
 
 		local placeId = game.PlaceId
 
+		-- Cross-executor HTTP GET. game:HttpGet is not present in every
+		-- executor environment (the "HttpGet is not a valid member of
+		-- DataModel" error), so prefer the executor request functions and
+		-- only fall back to game:HttpGet when nothing else is available.
+		local httpRequest = (syn and syn.request)
+			or (http and http.request)
+			or http_request
+			or request
+
+		local function httpGet(url)
+			if httpRequest then
+				local response = httpRequest({ Url = url, Method = "GET" })
+				return response and response.Body
+			end
+			return game:HttpGet(url)
+		end
+
 		local function ServerHop()
 
 			local cursor = ""
@@ -3273,10 +3389,13 @@ function syde:Init(library)
 					"/servers/Public?sortOrder=Asc&limit=100&cursor="
 					..cursor
 
-				local response =
-					HttpService:JSONDecode(
-						(syn and syn.request or http_request or request)({Url = url, Method = "GET"}).Body
-					)
+				local ok, response = pcall(function()
+					return HttpService:JSONDecode(httpGet(url))
+				end)
+
+				if not ok or type(response) ~= "table" or not response.data then
+					break
+				end
 
 				for _,server in pairs(response.data) do
 
@@ -3989,7 +4108,7 @@ function syde:Init(library)
 
 						local connection
 						connection = userinput.InputBegan:Connect(function(input, processed)
-							if not processed and input.UserInputType == Enum.UserInputType.Keyboard then
+							if not processed and syde:IsBindableInput(input) then
 								setKeybind(input.KeyCode)
 								connection:Disconnect()
 							end
@@ -4122,14 +4241,18 @@ function syde:Init(library)
 				end
 
 				-- Main input handler
-				syde:AddConnection(userinput.InputBegan, function(input)
-					if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-
+				syde:AddConnection(userinput.InputBegan, function(input, processed)
 					if data.WaitingForKey then
-						data.WaitingForKey = false
-						SetKeybind(input.KeyCode)
+						if syde:IsBindableInput(input) then
+							data.WaitingForKey = false
+							SetKeybind(input.KeyCode)
+						end
 						return
 					end
+
+					-- don't fire the bind while typing in a textbox / other UI
+					if processed then return end
+					if input.KeyCode == Enum.KeyCode.Unknown then return end
 
 					if input.KeyCode == data.Key then
 						data.Hold = true
@@ -5475,7 +5598,7 @@ function syde:Init(library)
 
 					syde:replayLoadTweens(Slider.slide.slideframe)
 
-					local decimalPlaces = tostring(Options.Increment):match("%.([^0]*)") and #tostring(Options.Increment):match("%.([^0]*)") or 0
+					local decimalPlaces = syde:DecimalPlaces(Options.Increment)
 					Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", Options.StarterValue, Options.Range[2])
 
 					local function BuildTicks(slide, options)
@@ -5579,6 +5702,7 @@ function syde:Init(library)
 							local range = Options.Range[2] - Options.Range[1]
 							local newValue = Options.Range[1] + sliderPosition * range
 							newValue = math.floor((newValue - Options.Range[1]) / Options.Increment + 0.5) * Options.Increment + Options.Range[1]
+							newValue = syde:RoundTo(newValue, syde:DecimalPlaces(Options.Increment))
 
 							-- Update the slider visual position
 							local snapPosition = (newValue - Options.Range[1]) / range
@@ -5586,7 +5710,7 @@ function syde:Init(library)
 
 
 							-- Update the displayed value
-							local decimalPlaces = tostring(Options.Increment):match("%.([^0]*)") and #tostring(Options.Increment):match("%.([^0]*)") or 0
+							local decimalPlaces = syde:DecimalPlaces(Options.Increment)
 							Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", newValue, Options.Range[2])
 
 
@@ -5646,6 +5770,7 @@ function syde:Init(library)
 
 						-- snap value to increment (same logic as UpdateSlider)
 						NewVal = math.floor((NewVal - Options.Range[1]) / Options.Increment + 0.5) * Options.Increment + Options.Range[1]
+						NewVal = syde:RoundTo(NewVal, syde:DecimalPlaces(Options.Increment))
 
 						local sliderPosition = (NewVal - Options.Range[1]) / range
 
@@ -5666,9 +5791,7 @@ function syde:Init(library)
 						)
 
 						-- detect decimal places from increment
-						local decimalPlaces = tostring(Options.Increment):match("%.([^0]*)")
-							and #tostring(Options.Increment):match("%.([^0]*)")
-							or 0
+						local decimalPlaces = syde:DecimalPlaces(Options.Increment)
 
 						-- update display (decimal safe)
 						Slider.v.Text = string.format(
@@ -5693,6 +5816,9 @@ function syde:Init(library)
 
 						Options.StarterValue = NewVal
 					end
+
+					-- click the value to type a custom number (reverts if outside range)
+					syde:AttachSliderInput(Slider, Options)
 
 					if Options.SFlag then
 						if Options.SFlag then
@@ -6267,15 +6393,42 @@ function syde:Init(library)
 		})
 
 		local function verifyDiscord(id)
-			local httpFn = syn and syn.request or http_request or request
-			if not httpFn then return false, nil end
+			-- Try Roblox GetAsync first
+			if HttpService.HttpEnabled then
+				local ok, res = pcall(function()
+					return HttpService:GetAsync(VERIFY_ENDPOINT .. id, true)
+				end)
+				if ok and res then
+					local decodedOk, decoded = pcall(function()
+						return HttpService:JSONDecode(res)
+					end)
+					if decodedOk and type(decoded) == "table" and decoded.verified then
+						return true, decoded.discordUsername or nil
+					end
+				end
+				return false, nil
+			end
 
-			local ok, r = pcall(httpFn, { Url = VERIFY_ENDPOINT .. id, Method = "GET" })
-			if not ok or not r or not r.Body then return false, nil end
+			-- Fallback: executor HTTP
+			local success, result = pcall(function()
+				if syn and syn.request then
+					local r = syn.request({ Url = VERIFY_ENDPOINT .. id, Method = "GET" })
+					local decoded = HttpService:JSONDecode(r.Body)
+					if decoded.verified then
+						return decoded.discordUsername or nil
+					end
+				elseif request then
+					local r = request({ Url = VERIFY_ENDPOINT .. id, Method = "GET" })
+					local decoded = HttpService:JSONDecode(r.Body)
+					if decoded.verified then
+						return decoded.discordUsername or nil
+					end
+				end
+				return nil
+			end)
 
-			local decodeOk, decoded = pcall(function() return HttpService:JSONDecode(r.Body) end)
-			if decodeOk and type(decoded) == "table" and decoded.verified then
-				return true, decoded.discordUsername or nil
+			if success and result then
+				return true, result
 			end
 
 			return false, nil
@@ -7556,7 +7709,7 @@ function syde:Init(library)
 
 					local connection
 					connection = userinput.InputBegan:Connect(function(input, processed)
-						if not processed and input.UserInputType == Enum.UserInputType.Keyboard then
+						if not processed and syde:IsBindableInput(input) then
 							setKeybind(input.KeyCode)
 							connection:Disconnect()
 						end
@@ -7708,7 +7861,8 @@ function syde:Init(library)
 
 				syde:replayLoadTweens(Slider.slide.slideframe)
 
-				Slider.v.Text = string.format("<font size='14'>%d</font><font color='#434343'>/%d</font>", Options.StarterValue, Options.Range[2])
+				local decimalPlaces = syde:DecimalPlaces(Options.Increment)
+				Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", Options.StarterValue, Options.Range[2])
 
 				local function BuildTicks(slide, options)
 					local ticksFrame = slide:FindFirstChild("Ticks")
@@ -7811,6 +7965,7 @@ function syde:Init(library)
 						local range = Options.Range[2] - Options.Range[1]
 						local newValue = Options.Range[1] + sliderPosition * range
 						newValue = math.floor((newValue - Options.Range[1]) / Options.Increment + 0.5) * Options.Increment + Options.Range[1]
+						newValue = syde:RoundTo(newValue, syde:DecimalPlaces(Options.Increment))
 
 						-- Update the slider visual position
 						local snapPosition = (newValue - Options.Range[1]) / range
@@ -7825,7 +7980,8 @@ function syde:Init(library)
 
 
 						-- Update the displayed value
-						Slider.v.Text = string.format("<font size='14'>%d</font><font color='#434343'>/%d</font>", newValue, Options.Range[2])
+						local decimalPlaces = syde:DecimalPlaces(Options.Increment)
+						Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", newValue, Options.Range[2])
 
 						tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
 
@@ -7902,7 +8058,8 @@ function syde:Init(library)
 					) 
 
 					-- Update value display
-					Slider.v.Text = string.format("<font size='14'>%d</font><font color='#434343'>/%d</font>", tostring(NewVal), Options.Range[2])
+					local decimalPlaces = syde:DecimalPlaces(Options.Increment)
+					Slider.v.Text = string.format("<font size='14'>%." .. decimalPlaces .. "f</font><font color='#434343'>/%." .. decimalPlaces .. "f</font>", NewVal, Options.Range[2])
 
 					-- Tween title appearance
 					tweenservice:Create(Slider.Title, TweenInfo.new(0.55, Enum.EasingStyle.Exponential), {
@@ -7919,6 +8076,9 @@ function syde:Init(library)
 
 					Options.StarterValue = NewVal
 				end
+
+				-- click the value to type a custom number (reverts if outside range)
+				syde:AttachSliderInput(Slider, Options)
 
 				if syde.ConfigEnabled and Options.Flag then
 					syde.Flags[Options.Flag] = Options
@@ -8010,14 +8170,18 @@ function syde:Init(library)
 			end
 
 			-- Main input handler
-			syde:AddConnection(userinput.InputBegan, function(input)
-				if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-
+			syde:AddConnection(userinput.InputBegan, function(input, processed)
 				if data.WaitingForKey then
-					data.WaitingForKey = false
-					SetKeybind(input.KeyCode)
+					if syde:IsBindableInput(input) then
+						data.WaitingForKey = false
+						SetKeybind(input.KeyCode)
+					end
 					return
 				end
+
+				-- don't fire the bind while typing in a textbox / other UI
+				if processed then return end
+				if input.KeyCode == Enum.KeyCode.Unknown then return end
 
 				if input.KeyCode == data.Key then
 					data.Hold = true
