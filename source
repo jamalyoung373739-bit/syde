@@ -1318,7 +1318,8 @@ function syde:AddDrag(Object, Main, ConstrainToParent)
 		end
 	end)
 
-	syde:AddConnection(Object.InputEnded, function(input)
+	-- listen globally so a fast drag that leaves the handle still releases
+	syde:AddConnection(userInput.InputEnded, function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = false
 		end
@@ -2851,6 +2852,9 @@ function syde:Init(library)
 
 	--dragging
 	syde:AddDrag(top, window, true)
+	if Minihome then
+		syde:AddDrag(Minihome, Minihome) -- make the watermark draggable
+	end
 	syde:MakeResizable(window.resize, window, Vector2.new(454, 228))
 
 	--initial transparency setup
@@ -6406,6 +6410,19 @@ function syde:Init(library)
 				LockToScreen = v
 			end,
 			SFlag = 'LS'
+		})
+
+		a:Toggle({
+			Title = 'Watermark',
+			Description = 'Toggles the draggable watermark display.',
+			Value = true,
+			CallBack = function (v)
+				local wm = ui:FindFirstChild('minihome')
+				if wm then
+					wm.Visible = v
+				end
+			end,
+			SFlag = 'WTRMK'
 		})
 
 
