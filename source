@@ -1364,7 +1364,7 @@ local mh = true
 do
 
 	function syde:Load(Config)
-		task.wait(1)
+		task.wait(0.4)
 		print('[SYED] Loader Loaded')
 		local LOADER = Loader
 		LOADER.Enabled = true
@@ -1562,7 +1562,7 @@ do
 		--	tweenservice:Create(logo, TweenInfo.new(1, Enum.EasingStyle.Quint), {Position = UDim2.new(0.5, 0,0, 105)}):Play()
 
 		tweenservice:Create(logo.Title, TweenInfo.new(2, Enum.EasingStyle.Exponential), {TextTransparency = 0}):Play()
-		task.wait(1)
+		task.wait(0.4)
 
 
 		--	local function initLoader()
@@ -1582,14 +1582,14 @@ do
 			tweenservice:Create(LOADER.loader.work, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { TextTransparency = 1 }):Play()
 			tweenservice:Create( LOADER.loader.work.ImageLabel, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { ImageTransparency = 1 }):Play()
 			tweenservice:Create( LOADER.loader.work, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Position = UDim2.new(0.5, 0,1, -100) }):Play()
-			task.wait(0.6)
+			task.wait(0.35)
 
 			-- reset
 
 		end
 
 		local function load()
-			TweenWorkLabel(1,'rbxassetid://136002400178503', '')
+			TweenWorkLabel(0.4,'rbxassetid://136002400178503', '')
 
 			if Config.ConfigurationSaving and Config.ConfigurationSaving.Enabled then
 				local folderName = Config.ConfigurationSaving.FolderName or "SydeSec"
@@ -1633,7 +1633,7 @@ do
 			end
 
 
-			TweenWorkLabel(1,'rbxassetid://105810189969774', '')
+			TweenWorkLabel(0.4,'rbxassetid://105810189969774', '')
 
 			local UI_TAG = "sydeUILoader"
 			local MARKER_NAME = "SYDEUIDetector"
@@ -1689,7 +1689,7 @@ do
 				end
 			end)
 
-			TweenWorkLabel(1,'rbxassetid://108012241529487', '')
+			TweenWorkLabel(0.4,'rbxassetid://108012241529487', '')
 
 
 			if Config.AutoJoinDiscord and Config.AutoJoinDiscord.Enabled then
@@ -1762,8 +1762,8 @@ do
 				end
 			end
 
-			TweenWorkLabel(1,'rbxassetid://136405833725573', '')
-			task.wait(1)
+			TweenWorkLabel(0.4,'rbxassetid://136405833725573', '')
+			task.wait(0.4)
 			loaded = true
 			--	tweenservice:Create( LOADER.load.Salt, TweenInfo.new(0.65, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 146,0, 25)}):Play()
 			--	tweenservice:Create( LOADER.load.Salt.ImageLabel, TweenInfo.new(0.65, Enum.EasingStyle.Exponential), {ImageTransparency = 0}):Play()
@@ -1773,7 +1773,7 @@ do
 		task.wait(0.08)
 		load()
 
-		task.wait(2)
+		task.wait(0.6)
 
 		--	Library.Enabled = true
 		syde.theme.Accent = Config.Accent;
@@ -7192,6 +7192,11 @@ function syde:Init(library)
 			-- already selected
 			if tbdata.first == tabName then
 				return
+			end
+
+			-- hide the Home screen if we're jumping straight from it (e.g. via search)
+			if Data.Home.Enabled and tbdata.homeActive then
+				HideHomeForTab()
 			end
 
 			-- update title (same logic as click)
