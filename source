@@ -243,6 +243,49 @@ function syde:FlashCopy(icon)
 	end)
 end
 
+-- Branded error reporter: prints a "screenshot this" banner, the error, and a likely fix.
+function syde:Report(context, err)
+	local message = tostring(err or "unknown error")
+	local low = string.lower(message)
+
+	local fix
+	if string.find(low, "httpget", 1, true) or string.find(low, "getobjects", 1, true)
+		or string.find(low, "failed to load library", 1, true) or string.find(low, "rbxassetid", 1, true) then
+		fix = "The UI asset/source failed to download. Re-run it; if it keeps happening your executor is blocking HttpGet/asset loading, or GitHub is serving an old/partial copy (wait ~30s)."
+	elseif string.find(low, "not a valid member", 1, true) or string.find(low, "attempt to index nil", 1, true)
+		or string.find(low, "index a nil", 1, true) then
+		fix = "A UI element is missing - your Source and the UI asset id are out of sync. Re-copy the newest Source and re-grab the UI asset."
+	elseif string.find(low, "attempt to call a nil value", 1, true) then
+		fix = "A required function is missing - usually an executor that lacks a global like gethui/getgenv/setclipboard. Try an updated/different executor."
+	elseif string.find(low, "callback", 1, true) then
+		fix = "This came from a callback (your own function), not Syde itself. Check the function attached to that element."
+	else
+		fix = "Unexpected error - send the screenshot above so it can be looked into."
+	end
+
+	warn(table.concat({
+		"",
+		"----------screenshot this and send it to king jericoo------",
+		"[ Syde ] " .. tostring(context or "Error"),
+		"Problem: " .. message,
+		"Fix: " .. fix,
+		"------------------------------------------------------------",
+		"",
+	}, "\n"))
+end
+
+-- Wrap a function so any error it throws is reported via the banner (and swallowed).
+function syde:Guard(context, fn)
+	return function(...)
+		local res = table.pack(pcall(fn, ...))
+		if not res[1] then
+			syde:Report(context, res[2])
+			return nil
+		end
+		return table.unpack(res, 2, res.n)
+	end
+end
+
 -- Make a slider's value label clickable so the user can type an exact number.
 -- Out-of-range or invalid input reverts to the previous value.
 function syde:AttachSliderInput(Slider, Options)
@@ -1660,7 +1703,7 @@ do
 			end)
 
 			if not successLibrary or not Library then
-				warn("[SYDE] Failed to load Library.")
+				syde:Report("Loading UI library", "Library/GetObjects returned nil - the UI asset failed to load")
 				return
 			end
 
@@ -2752,7 +2795,7 @@ function syde:Init(library)
 		end)
 
 		if not successLibrary or not Library then
-			warn("[SYDE] Failed to load Library.")
+			syde:Report("Loading UI library", "Library/GetObjects returned nil - the UI asset failed to load")
 			return
 		end
 
@@ -3812,7 +3855,7 @@ function syde:Init(library)
 						if data.CallBack then
 							local success, errorMsg = pcall(c)
 							if not success then
-								warn(`[ Button Error: { button.Name } ] Callback Error: { errorMsg }`)
+								syde:Report("Button '" .. button.Name .. "' callback", errorMsg)
 
 							end
 						else
@@ -3886,7 +3929,7 @@ function syde:Init(library)
 							if data.CallBack then
 								local success, errorMsg = pcall(data.CallBack)
 								if not success then
-									warn("[CALLBACK ERROR]:", errorMsg)
+									syde:Report("Element callback", errorMsg)
 								end
 							else
 								warn("[CALLBACK MISSING]: No Function Assigned To", data.Title)
@@ -4017,7 +4060,7 @@ function syde:Init(library)
 					end)
 
 					if not success then
-						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 					end
 				end)
 
@@ -4187,7 +4230,7 @@ function syde:Init(library)
 									data.CallBack(data.V)
 								end)
 								if not success then
-									warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+									syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 								end
 							end
 						end
@@ -4248,7 +4291,7 @@ function syde:Init(library)
 					end)
 
 					if not success then
-						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 					end
 
 				end
@@ -4333,7 +4376,7 @@ function syde:Init(library)
 						local success, result = pcall(data.CallBack)
 						if not data.Holding then
 							if not success then
-								warn(`[Keybind: {KeyBind.Name}] Callback Error: {result}`)
+								syde:Report("Keybind '" .. KeyBind.Name .. "' callback", result)
 							end
 						else
 							if data.Hold then
@@ -5790,7 +5833,7 @@ function syde:Init(library)
 								Options.CallBack(newValue)
 							end)
 							if not success then
-								warn("[CALLBACK ERROR][" .. Slider.Name .. "]: " .. tostring(errorMsg))
+								syde:Report("Slider '" .. Slider.Name .. "' callback", errorMsg)
 							end
 
 							Options.StarterValue = newValue
@@ -5881,7 +5924,7 @@ function syde:Init(library)
 						end)
 
 						if not success then
-							warn(`[ Slider Error: { Slider.Name } ] Callback Error: { result }`)
+							syde:Report("Slider '" .. Slider.Name .. "' callback", result)
 						end
 
 						Options.StarterValue = NewVal
@@ -6072,7 +6115,7 @@ function syde:Init(library)
 						data.CallBack(text)
 					end)
 					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 					end
 				end
 
@@ -6083,7 +6126,7 @@ function syde:Init(library)
 						data.CallBack(textBox.Text)
 					end)
 					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 					end
 
 					if data.ClearOnLost then
@@ -6101,7 +6144,7 @@ function syde:Init(library)
 						data.CallBack(textBox.Text)
 					end)
 					if not success then
-						warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 					end
 
 					if data.ClearOnLost then
@@ -6115,6 +6158,13 @@ function syde:Init(library)
 				end)
 
 
+			end
+
+			-- guard every builder so a failed element shows the banner instead of breaking the UI
+			for _bn, _bf in pairs(telement) do
+				if type(_bf) == "function" then
+					telement[_bn] = syde:Guard("Building a '" .. tostring(_bn) .. "' element", _bf)
+				end
 			end
 
 			return telement
@@ -7438,7 +7488,7 @@ function syde:Init(library)
 					if data.CallBack then
 						local success, errorMsg = pcall(c)
 						if not success then
-							warn(`[ Button Error: { button.Name } ] Callback Error: { errorMsg }`)
+							syde:Report("Button '" .. button.Name .. "' callback", errorMsg)
 
 						end
 					else
@@ -7512,7 +7562,7 @@ function syde:Init(library)
 						if data.CallBack then
 							local success, errorMsg = pcall(data.CallBack)
 							if not success then
-								warn("[CALLBACK ERROR]:", errorMsg)
+								syde:Report("Element callback", errorMsg)
 							end
 						else
 							warn("[CALLBACK MISSING]: No Function Assigned To", data.Title)
@@ -7644,7 +7694,7 @@ function syde:Init(library)
 				end)
 
 				if not success then
-					warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+					syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 				end
 			end)
 
@@ -7814,7 +7864,7 @@ function syde:Init(library)
 								data.CallBack(data.V)
 							end)
 							if not success then
-								warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+								syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 							end
 						end
 
@@ -7873,7 +7923,7 @@ function syde:Init(library)
 						data.CallBack(data.V)
 					end)
 					if not success then
-						warn("[CALLBACK ERROR][" .. toggle.Name .. "]: " .. tostring(errorMsg))
+						syde:Report("Toggle '" .. toggle.Name .. "' callback", errorMsg)
 					end
 				end
 			end
@@ -8077,7 +8127,7 @@ function syde:Init(library)
 							Options.CallBack(newValue)
 						end)
 						if not success then
-							warn("[CALLBACK ERROR][" .. Slider.Name .. "]: " .. tostring(errorMsg))
+							syde:Report("Slider '" .. Slider.Name .. "' callback", errorMsg)
 						end
 
 
@@ -8159,7 +8209,7 @@ function syde:Init(library)
 						Options.CallBack(NewVal)
 					end)
 					if not success then
-						warn(`[ Slider Error: { slider.Name } ] Callback Error: { result }`)
+						syde:Report("Slider '" .. slider.Name .. "' callback", result)
 					end
 
 					Options.StarterValue = NewVal
@@ -8288,7 +8338,7 @@ function syde:Init(library)
 					local success, result = pcall(data.CallBack)
 					if not data.Holding then
 						if not success then
-							warn(`[Keybind: {KeyBind.Name}] Callback Error: {result}`)
+							syde:Report("Keybind '" .. KeyBind.Name .. "' callback", result)
 						end
 					else
 						if data.Hold then
@@ -8399,7 +8449,7 @@ function syde:Init(library)
 					data.CallBack(text)
 				end)
 				if not success then
-					warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+					syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 				end
 			end
 
@@ -8410,7 +8460,7 @@ function syde:Init(library)
 					data.CallBack(textBox.Text)
 				end)
 				if not success then
-					warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+					syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 				end
 
 				if data.ClearOnLost then
@@ -8428,7 +8478,7 @@ function syde:Init(library)
 					data.CallBack(textBox.Text)
 				end)
 				if not success then
-					warn("Error in TextInput callback [" .. textinput.Name .. "]: " .. tostring(errorMsg))
+					syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
 				end
 
 				if data.ClearOnLost then
@@ -10071,6 +10121,13 @@ function syde:Init(library)
 
 			return data
 
+		end
+
+		-- guard every builder so a failed element shows the banner instead of breaking the UI
+		for _bn, _bf in pairs(initelement) do
+			if type(_bf) == "function" then
+				initelement[_bn] = syde:Guard("Building a '" .. tostring(_bn) .. "' element", _bf)
+			end
 		end
 
 		return initelement
