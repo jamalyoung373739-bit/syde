@@ -4198,7 +4198,7 @@ function syde:Init(library)
 
 						local connection
 						connection = userinput.InputBegan:Connect(function(input, processed)
-							if not processed and syde:IsBindableInput(input) then
+							if not userinput:GetFocusedTextBox() and syde:IsBindableInput(input) then
 								setKeybind(input.KeyCode)
 								connection:Disconnect()
 							end
@@ -4206,7 +4206,7 @@ function syde:Init(library)
 					end)
 
 					userinput.InputBegan:Connect(function(input, processed)
-						if not processed and data.Keybind and data.KeybindReady and input.KeyCode == data.Keybind then
+						if not userinput:GetFocusedTextBox() and data.Keybind and data.KeybindReady and input.KeyCode == data.Keybind then
 							data.V = not data.V
 							UpdateToggleUI(data.V)
 
@@ -4340,8 +4340,9 @@ function syde:Init(library)
 						return
 					end
 
-					-- don't fire the bind while typing in a textbox / other UI
-					if processed then return end
+					-- don't fire the bind while typing in a textbox (ignore processed so
+					-- keys the game also uses, e.g. RightShift shift-lock, still work)
+					if userinput:GetFocusedTextBox() then return end
 					if input.KeyCode == Enum.KeyCode.Unknown then return end
 
 					if input.KeyCode == data.Key then
@@ -7829,7 +7830,7 @@ function syde:Init(library)
 
 					local connection
 					connection = userinput.InputBegan:Connect(function(input, processed)
-						if not processed and syde:IsBindableInput(input) then
+						if not userinput:GetFocusedTextBox() and syde:IsBindableInput(input) then
 							setKeybind(input.KeyCode)
 							connection:Disconnect()
 						end
@@ -7837,7 +7838,7 @@ function syde:Init(library)
 				end)
 
 				userinput.InputBegan:Connect(function(input, processed)
-					if not processed and data.Keybind and data.KeybindReady and input.KeyCode == data.Keybind then
+					if not userinput:GetFocusedTextBox() and data.Keybind and data.KeybindReady and input.KeyCode == data.Keybind then
 						data.V = not data.V
 						UpdateToggleUI(data.V)
 
@@ -8298,8 +8299,9 @@ function syde:Init(library)
 					return
 				end
 
-				-- don't fire the bind while typing in a textbox / other UI
-				if processed then return end
+				-- don't fire the bind while typing in a textbox (ignore processed so
+				-- keys the game also uses, e.g. RightShift shift-lock, still work)
+				if userinput:GetFocusedTextBox() then return end
 				if input.KeyCode == Enum.KeyCode.Unknown then return end
 
 				if input.KeyCode == data.Key then
