@@ -1408,7 +1408,6 @@ do
 
 	function syde:Load(Config)
 		task.wait(0.4)
-		print('[SYED] Loader Loaded')
 		local LOADER = Loader
 		LOADER.Enabled = true
 		LOADER.Parent = coregui
@@ -1579,7 +1578,6 @@ do
 					task.wait(0.5)
 					tweenservice:Create(clone.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Color = Styles[platform].BackGroundColor}):Play()
 					tweenservice:Create(clone.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Transparency = 0.5}):Play()
-					print(value)
 				else
 					tweenservice:Create(clone.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Color = Color3.fromRGB(255, 41, 45)}):Play()
 					tweenservice:Create(clone.Frame.UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Quart), {Transparency = 0}):Play()
@@ -1750,7 +1748,6 @@ do
 						makefolder(discordFolder)
 					end)
 					if folderSuccess then
-						print("[SYDE] Created DiscordInvites folder at:", discordFolder)
 					else
 						warn("[SYDE] Failed to create DiscordInvites folder:", folderErr)
 					end
@@ -1758,7 +1755,6 @@ do
 
 				local shouldPrompt = true
 				if isfile and discordConfig.RememberJoins and isfile(inviteFilePath) then
-					print("[SYDE] Discord invite '" .. inviteCode .. "' already joined. Skipping prompt.")
 					shouldPrompt = false
 				end
 
@@ -1783,7 +1779,6 @@ do
 						end)
 
 						if reqSuccess then
-							print("[SYDE] Discord invite sent successfully to:", inviteCode)
 						else
 							warn("[SYDE] Failed to send Discord invite:", reqErr)
 						end
@@ -1797,7 +1792,6 @@ do
 						end)
 
 						if writeSuccess then
-							print("[SYDE] Logged Discord invite join for:", inviteCode)
 						else
 							warn("[SYDE] Failed to write join log for invite:", writeErr)
 						end
@@ -2203,7 +2197,6 @@ function syde:Notify(Notification)
 		Notification.Content.Text = NotifData.Content
 		Notification.Content.Size = UDim2.new(0, 200,0, Notification.Content.TextBounds.Y )
 		Notification.icon.Image = 'rbxassetid://'..NotifData.Icon
-		print(NotifData.Icon)
 		Notification.icon.Visible = true
 
 
@@ -2352,7 +2345,6 @@ function syde:Modal(Modal)
 
 		local function closeModal()
 			activeModals -= 1
-			print(activeModals)
 			ModalInstance.Buttons.Cancel.Interactable = false
 			ModalInstance.Buttons.Confirm.Interactable = false
 			tweenservice:Create(ModalInstance, TweenInfo.new(0.75, Enum.EasingStyle.Quint), {Size = UDim2.new(0, 350,0, 147)}):Play()
@@ -2520,7 +2512,6 @@ end
 
 --@SetupFunctionst
 function SetUserInfo()
-	print('set')
 	local LocalPlayer = player.LocalPlayer
 
 	local PLACEHOLDER_IMAGE = "rbxassetid://0" 
@@ -2724,7 +2715,6 @@ function ToggleUI()
 
 	if uiclosed then
 		--	task.wait(0.2)
-		print('open')
 		openui()
 
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
@@ -2739,7 +2729,6 @@ function ToggleUI()
 		userinput:GetPropertyChangedSignal("TouchEnabled"):Connect(updateLayout)
 	else
 		closeui()
-		print('close')
 	end
 
 	task.delay(0.2, function()
@@ -3215,7 +3204,6 @@ function syde:Init(library)
 		layout:Bind()
 		layout:Update()
 
-		print("LATENCY SCRIPT RUNNING")
 
 		local Stats = game:GetService("Stats")
 		local TweenService = game:GetService("TweenService")
@@ -3398,7 +3386,6 @@ function syde:Init(library)
 
 				local ping = getPing()
 				-- replace with getPing() when ready
-				print(ping)
 
 				table.insert(history,ping)
 
@@ -5781,7 +5768,6 @@ function syde:Init(library)
 							existingTicks[i]:Destroy()
 						end
 
-						--	print("✅ Created", tickCount, "ticks")
 					end
 
 					-- Connect AbsoluteSize change **only once**
@@ -6182,7 +6168,6 @@ function syde:Init(library)
 			Key = uitoggle,
 			OnKeyChanged = function(newKey)
 				uitoggle = newKey
-				print(newKey)
 			end,
 			CallBack = function()
 				ToggleUI()
@@ -6394,7 +6379,6 @@ function syde:Init(library)
 					StarterValue = dragSpeed,
 					CallBack = function(v)
 						dragSpeed = v
-						print(dragSpeed)
 					end,
 					SFlag = 'DSmoothness',
 					SettingConfig = true
@@ -8069,7 +8053,6 @@ function syde:Init(library)
 						existingTicks[i]:Destroy()
 					end
 
-					--	print("✅ Created", tickCount, "ticks")
 				end
 
 				-- Connect AbsoluteSize change **only once**
