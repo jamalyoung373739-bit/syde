@@ -1740,8 +1740,6 @@ do
 				local inviteCode = discordConfig.Invite
 				local inviteFilePath = discordFolder .. "/" .. inviteCode .. ".txt"
 
-				warn("[SYDE] Discord AutoJoin enabled. Preparing to send invite:", inviteCode)
-
 				-- Ensure folder exists
 				if isfolder and not isfolder(discordFolder) then
 					local folderSuccess, folderErr = pcall(function()
