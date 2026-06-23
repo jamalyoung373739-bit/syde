@@ -5621,7 +5621,7 @@ function syde:Init(library)
 					data.Options = newOptions or {}
 					data.StarterOption = starter
 					for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
-						if child.Name ~= "Option" then
+						if child:IsA("GuiObject") and child.Name ~= "Option" then
 							child:Destroy()
 						end
 					end
@@ -6681,7 +6681,6 @@ function syde:Init(library)
 
 		local function resolveConfigName()
 			if selectedConfig and selectedConfig ~= "" then return selectedConfig end
-			if currentConfigName and currentConfigName ~= "" then return currentConfigName end
 			return syde.ConfigFile
 		end
 
@@ -9162,7 +9161,7 @@ function syde:Init(library)
 				data.Options = newOptions or {}
 				data.StarterOption = starter
 				for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
-					if child.Name ~= "Option" then
+					if child:IsA("GuiObject") and child.Name ~= "Option" then
 						child:Destroy()
 					end
 				end
@@ -10098,6 +10097,13 @@ function syde:Init(library)
 				HSV[1], HSV[2], HSV[3] = h, s, v
 
 				updatestuff()
+
+				if data.CallBack then
+					local ok, err = pcall(data.CallBack, RGBColor)
+					if not ok then
+						syde:Report("ColorPicker '" .. colorpicker.Name .. "' callback", err)
+					end
+				end
 			end
 
 			if syde.ConfigEnabled and data.Flag then
