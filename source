@@ -570,15 +570,12 @@ end
 -- Removes the part binding from a gui object if one exists.
 function syde:UnbindFrame(frame)
 	local cb = binds[frame]
-	if cb then
-		RunService:UnbindFromRenderStep(cb.uid)
-		for _, v in pairs(cb.parts) do
-			v:Destroy()
-		end
-		binds[frame] = nil
-	else
-		warn(('No part bindings exist for %s'):format(frame:GetFullName()))
+	if not cb then return end
+	RunService:UnbindFromRenderStep(cb.uid)
+	for _, v in pairs(cb.parts) do
+		v:Destroy()
 	end
+	binds[frame] = nil
 end
 
 -- Returns true if a part binding exists for the gui object.
@@ -2587,8 +2584,8 @@ function openui()
 
 	if bluron then
 		syde:BindFrame(window, {
-			Transparency = 0.98;
-			BrickColor = BrickColor.new('Institutional white');
+			Transparency = 0.5;
+			BrickColor = BrickColor.new('Really black');
 		})
 		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.15 }):Play()
 	else
@@ -6315,6 +6312,11 @@ function syde:Init(library)
 				if v then
 					window.shadow.ImageLabel.Visible = false
 					window.BackgroundTransparency = 0.15
+
+					window.pages.v1.Visible = false
+					window.pages.v0.Visible = false
+					window.pages.clipframe.v1.Visible = false
+					window.pages.clipframe.v0.Visible = false
 
 					syde:BindFrame(window, {
 						Transparency = 0.5;
