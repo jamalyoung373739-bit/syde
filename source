@@ -4724,7 +4724,6 @@ function syde:Init(library)
 					local g = GradientFrame
 					local UIS = game:GetService("UserInputService")
 					local RS = game:GetService("RunService")
-					local mouse = game.Players.LocalPlayer:GetMouse()
 
 					local function updateUI()
 						g.Pin1.Position = UDim2.new(Keys[2].Time, 0, 0.5, 0)
@@ -4767,13 +4766,14 @@ function syde:Init(library)
 					RS.Heartbeat:Connect(function()
 						if not DraggingPin then return end
 
-						local relX = (mouse.X - g.AbsolutePosition.X) / g.AbsoluteSize.X
+						local mousePos = UIS:GetMouseLocation()
+						local relX = (mousePos.X - g.AbsolutePosition.X) / g.AbsoluteSize.X
 						relX = math.clamp(relX, 0, 1)
 
 						if DraggingPin == 2 then
-							relX = math.clamp(relX, 0, Keys[3].Time - 0.01) 
+							relX = math.clamp(relX, 0, Keys[3].Time - 0.01)
 						elseif DraggingPin == 3 then
-							relX = math.clamp(relX, Keys[2].Time + 0.01, 1) 
+							relX = math.clamp(relX, Keys[2].Time + 0.01, 1)
 						end
 
 						Keys[DraggingPin] = ColorSequenceKeypoint.new(relX, Keys[DraggingPin].Value)
@@ -5041,7 +5041,7 @@ function syde:Init(library)
 				syde:AddConnection(SVPicker.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						SV = runservice.RenderStepped:Connect(function()
-							local mouse = game.Players.LocalPlayer:GetMouse()
+							local mouse = userinput:GetMouseLocation()
 							local ColorX = math.clamp(mouse.X - SVPicker.AbsolutePosition.X, 0, SVPicker.AbsoluteSize.X) / SVPicker.AbsoluteSize.X
 							local ColorY = math.clamp(mouse.Y - SVPicker.AbsolutePosition.Y, 0, SVPicker.AbsoluteSize.Y) / SVPicker.AbsoluteSize.Y
 
@@ -5056,7 +5056,7 @@ function syde:Init(library)
 				syde:AddConnection(HUESlider.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						HUE = runservice.RenderStepped:Connect(function()
-							local mouse = game.Players.LocalPlayer:GetMouse()
+							local mouse = userinput:GetMouseLocation()
 							local ColorX = math.clamp(mouse.X - HUESlider.AbsolutePosition.X, 0, HUESlider.AbsoluteSize.X) / HUESlider.AbsoluteSize.X
 
 							HSV[1] = 1 - ColorX
@@ -5145,7 +5145,7 @@ function syde:Init(library)
 				local draggedColorPicker = nil
 
 				local function isMouseOver(guiObject)
-					local mouse = game.Players.LocalPlayer:GetMouse()
+					local mouse = userinput:GetMouseLocation()
 					local pos = guiObject.AbsolutePosition
 					local size = guiObject.AbsoluteSize
 					return mouse.X >= pos.X and mouse.X <= pos.X + size.X and mouse.Y >= pos.Y and mouse.Y <= pos.Y + size.Y
@@ -5163,7 +5163,7 @@ function syde:Init(library)
 							followMouse:Disconnect()
 							return
 						end
-						local mouse = game.Players.LocalPlayer:GetMouse()
+						local mouse = userinput:GetMouseLocation()
 						--	colorpicker.HueValues.Link.Frame.Position = UDim2.new(0, mouse.X - colorpicker.AbsolutePosition.X - 50, 0, mouse.Y - colorpicker.AbsolutePosition.Y - 260)
 						TweenService:Create(colorpicker.HueValues.Link.Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = UDim2.new(0, mouse.X - colorpicker.AbsolutePosition.X - 50, 0, mouse.Y - colorpicker.AbsolutePosition.Y - 260) }):Play()
 
@@ -9520,7 +9520,6 @@ function syde:Init(library)
 				local g = GradientFrame
 				local UIS = game:GetService("UserInputService")
 				local RS = game:GetService("RunService")
-				local mouse = game.Players.LocalPlayer:GetMouse()
 
 				local function updateUI()
 					g.Pin1.Position = UDim2.new(Keys[2].Time, 0, 0.5, 0)
@@ -9563,13 +9562,14 @@ function syde:Init(library)
 				RS.Heartbeat:Connect(function()
 					if not DraggingPin then return end
 
-					local relX = (mouse.X - g.AbsolutePosition.X) / g.AbsoluteSize.X
+					local mousePos = UIS:GetMouseLocation()
+					local relX = (mousePos.X - g.AbsolutePosition.X) / g.AbsoluteSize.X
 					relX = math.clamp(relX, 0, 1)
 
 					if DraggingPin == 2 then
-						relX = math.clamp(relX, 0, Keys[3].Time - 0.01) 
+						relX = math.clamp(relX, 0, Keys[3].Time - 0.01)
 					elseif DraggingPin == 3 then
-						relX = math.clamp(relX, Keys[2].Time + 0.01, 1) 
+						relX = math.clamp(relX, Keys[2].Time + 0.01, 1)
 					end
 
 					Keys[DraggingPin] = ColorSequenceKeypoint.new(relX, Keys[DraggingPin].Value)
@@ -9850,7 +9850,7 @@ function syde:Init(library)
 			syde:AddConnection(SVPicker.InputBegan, function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					SV = runservice.RenderStepped:Connect(function()
-						local mouse = game.Players.LocalPlayer:GetMouse()
+						local mouse = userinput:GetMouseLocation()
 						local ColorX = math.clamp(mouse.X - SVPicker.AbsolutePosition.X, 0, SVPicker.AbsoluteSize.X) / SVPicker.AbsoluteSize.X
 						local ColorY = math.clamp(mouse.Y - SVPicker.AbsolutePosition.Y, 0, SVPicker.AbsoluteSize.Y) / SVPicker.AbsoluteSize.Y
 
@@ -9865,7 +9865,7 @@ function syde:Init(library)
 			syde:AddConnection(HUESlider.InputBegan, function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					HUE = runservice.RenderStepped:Connect(function()
-						local mouse = game.Players.LocalPlayer:GetMouse()
+						local mouse = userinput:GetMouseLocation()
 						local ColorX = math.clamp(mouse.X - HUESlider.AbsolutePosition.X, 0, HUESlider.AbsoluteSize.X) / HUESlider.AbsoluteSize.X
 
 						HSV[1] = 1 - ColorX
@@ -9954,7 +9954,7 @@ function syde:Init(library)
 			local draggedColorPicker = nil
 
 			local function isMouseOver(guiObject)
-				local mouse = game.Players.LocalPlayer:GetMouse()
+				local mouse = userinput:GetMouseLocation()
 				local pos = guiObject.AbsolutePosition
 				local size = guiObject.AbsoluteSize
 				return mouse.X >= pos.X and mouse.X <= pos.X + size.X and mouse.Y >= pos.Y and mouse.Y <= pos.Y + size.Y
@@ -9972,7 +9972,7 @@ function syde:Init(library)
 						followMouse:Disconnect()
 						return
 					end
-					local mouse = game.Players.LocalPlayer:GetMouse()
+					local mouse = userinput:GetMouseLocation()
 					-- colorpicker.HueValues.Link.Frame.Position = UDim2.new(0, mouse.X - colorpicker.AbsolutePosition.X - 50, 0, mouse.Y - colorpicker.AbsolutePosition.Y - 260)
 					TweenService:Create(colorpicker.HueValues.Link.Frame, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Position = UDim2.new(0, mouse.X - colorpicker.AbsolutePosition.X - 50, 0, mouse.Y - colorpicker.AbsolutePosition.Y - 260) }):Play()
 
