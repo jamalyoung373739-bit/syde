@@ -2590,7 +2590,7 @@ function openui()
 			Transparency = 0.98;
 			BrickColor = BrickColor.new('Institutional white');
 		})
-		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.45 }):Play()
+		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0.15 }):Play()
 	else
 		tweenservice:Create(window, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), {BackgroundTransparency = 0 }):Play()
 	end
@@ -5056,14 +5056,6 @@ function syde:Init(library)
 					end
 				end)
 
-				syde:AddConnection(SVPicker.InputEnded, function(i)
-					if i.UserInputType == Enum.UserInputType.MouseButton1 and SV then
-						SV:Disconnect()
-						SV = nil
-						AddRecentColor(data.Color)
-					end
-				end)
-
 				syde:AddConnection(HUESlider.InputBegan, function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 then
 						HUE = runservice.RenderStepped:Connect(function()
@@ -5077,11 +5069,18 @@ function syde:Init(library)
 					end
 				end)
 
-				syde:AddConnection(HUESlider.InputEnded, function(i)
-					if i.UserInputType == Enum.UserInputType.MouseButton1 and HUE then
-						HUE:Disconnect()
-						HUE = nil
-						AddRecentColor(data.Color)
+				syde:AddConnection(userinput.InputEnded, function(i)
+					if i.UserInputType == Enum.UserInputType.MouseButton1 then
+						if SV then
+							SV:Disconnect()
+							SV = nil
+							AddRecentColor(data.Color)
+						end
+						if HUE then
+							HUE:Disconnect()
+							HUE = nil
+							AddRecentColor(data.Color)
+						end
 					end
 				end)
 
@@ -6315,17 +6314,11 @@ function syde:Init(library)
 			CallBack = function (v)
 				if v then
 					window.shadow.ImageLabel.Visible = false
-					window.BackgroundTransparency = 0.45
-
-					window.pages.v1.Visible = false
-					window.pages.v0.Visible = false
-
-					window.pages.clipframe.v1.Visible = false
-					window.pages.clipframe.v0.Visible = false
+					window.BackgroundTransparency = 0.15
 
 					syde:BindFrame(window, {
-						Transparency = 0.98;
-						BrickColor = BrickColor.new('Institutional white');
+						Transparency = 0.5;
+						BrickColor = BrickColor.new('Really black');
 					})
 
 					local dof = Instance.new('DepthOfFieldEffect')
@@ -9867,14 +9860,6 @@ function syde:Init(library)
 				end
 			end)
 
-			syde:AddConnection(SVPicker.InputEnded, function(i)
-				if i.UserInputType == Enum.UserInputType.MouseButton1 and SV then
-					SV:Disconnect()
-					SV = nil
-					AddRecentColor(data.Color)
-				end
-			end)
-
 			syde:AddConnection(HUESlider.InputBegan, function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					HUE = runservice.RenderStepped:Connect(function()
@@ -9888,11 +9873,18 @@ function syde:Init(library)
 				end
 			end)
 
-			syde:AddConnection(HUESlider.InputEnded, function(i)
-				if i.UserInputType == Enum.UserInputType.MouseButton1 and HUE then
-					HUE:Disconnect()
-					HUE = nil
-					AddRecentColor(data.Color)
+			syde:AddConnection(userinput.InputEnded, function(i)
+				if i.UserInputType == Enum.UserInputType.MouseButton1 then
+					if SV then
+						SV:Disconnect()
+						SV = nil
+						AddRecentColor(data.Color)
+					end
+					if HUE then
+						HUE:Disconnect()
+						HUE = nil
+						AddRecentColor(data.Color)
+					end
 				end
 			end)
 
