@@ -1648,7 +1648,7 @@ do
 
 				-- Only preload the saved config if AutoLoad was explicitly enabled
 				local autoloadPath = string.format("%s/_autoload.txt", folderName)
-				local autoload = false
+				local autoload = Config.AutoLoad == true
 				if isfile and isfile(autoloadPath) then
 					local ok, content = pcall(readfile, autoloadPath)
 					if ok and content then
@@ -9156,6 +9156,26 @@ function syde:Init(library)
 			end
 
 			SetDropdownOptions()
+
+			function data:GetSelected()
+				return SelectedOrder[1]
+			end
+
+			function data:SetOptions(newOptions, starter)
+				data.Options = newOptions or {}
+				data.StarterOption = starter
+				for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
+					if child:IsA("Frame") and child.Name ~= "Option" then
+						child:Destroy()
+					end
+				end
+				SelectedOptions = {}
+				SelectedOrder = {}
+				dropdown.dropholder.drop.selected.Text = data.PlaceHolder
+				SetDropdownOptions()
+			end
+
+			return data
 		end
 
 		--@@Colorpicker
