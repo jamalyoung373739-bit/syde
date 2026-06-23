@@ -5621,7 +5621,7 @@ function syde:Init(library)
 					data.Options = newOptions or {}
 					data.StarterOption = starter
 					for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
-						if child:IsA("Frame") and child.Name ~= "Option" then
+						if child.Name ~= "Option" then
 							child:Destroy()
 						end
 					end
@@ -6101,14 +6101,15 @@ function syde:Init(library)
 				end
 
 				textBox.FocusLost:Connect(function(enterPressed)
-					if not enterPressed then return end
-
-					local success, errorMsg = pcall(function()
-						data.CallBack(textBox.Text)
-					end)
-					if not success then
-						syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
+					if not enterPressed then
+						if not data.ClearOnLost and textBox.Text ~= "" then
+							ProcessInput(textBox.Text)
+							textBox.ClearTextOnFocus = false
+						end
+						return
 					end
+
+					ProcessInput(textBox.Text)
 
 					if data.ClearOnLost then
 						task.defer(function()
@@ -6121,12 +6122,7 @@ function syde:Init(library)
 				end)
 
 				textinput.TextFrame.Enter.MouseButton1Click:Connect(function()
-					local success, errorMsg = pcall(function()
-						data.CallBack(textBox.Text)
-					end)
-					if not success then
-						syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
-					end
+					ProcessInput(textBox.Text)
 
 					if data.ClearOnLost then
 						task.defer(function()
@@ -8432,14 +8428,15 @@ function syde:Init(library)
 			end
 
 			textBox.FocusLost:Connect(function(enterPressed)
-				if not enterPressed then return end
-
-				local success, errorMsg = pcall(function()
-					data.CallBack(textBox.Text)
-				end)
-				if not success then
-					syde:Report("TextInput '" .. textinput.Name .. "' callback", errorMsg)
+				if not enterPressed then
+					if not data.ClearOnLost and textBox.Text ~= "" then
+						ProcessInput(textBox.Text)
+						textBox.ClearTextOnFocus = false
+					end
+					return
 				end
+
+				ProcessInput(textBox.Text)
 
 				if data.ClearOnLost then
 					task.defer(function()
@@ -9165,7 +9162,7 @@ function syde:Init(library)
 				data.Options = newOptions or {}
 				data.StarterOption = starter
 				for _, child in ipairs(dropdown.dropholder.drop.Container:GetChildren()) do
-					if child:IsA("Frame") and child.Name ~= "Option" then
+					if child.Name ~= "Option" then
 						child:Destroy()
 					end
 				end
